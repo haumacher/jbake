@@ -1,7 +1,5 @@
 package org.jbake.app;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.template.DelegatingTemplateEngine;
@@ -13,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,9 +52,10 @@ public class Renderer {
      * Render the supplied content to a file.
      *
      * @param content The content to renderDocument
+     * @return The rendered/updated {@link File}.
      * @throws Exception
      */
-    public void render(Map<String, Object> content) throws Exception {
+    public File render(Map<String, Object> content) throws Exception {
     	String docType = (String) content.get("type");
         String outputFilename = destination.getPath() + File.separatorChar + (String) content.get("uri");
         outputFilename = outputFilename.substring(0, outputFilename.lastIndexOf("."));
@@ -95,6 +93,8 @@ public class Renderer {
             LOGGER.error(sb.toString(), e);
             throw new Exception("Failed to render file. Cause: " + e.getMessage(), e);
         }
+        
+        return outputFile;
     }
 
     private Writer createWriter(File file) throws IOException {

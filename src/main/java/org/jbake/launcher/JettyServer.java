@@ -6,6 +6,10 @@ import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.jbake.app.Oven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +29,28 @@ public class JettyServer {
 	 * @param path
 	 * @param port
 	 */
-	public static void run(String path, String port) {
+	public static void run(String path, String port, Oven oven) {
 		Server server = new Server();
 		SelectChannelConnector connector = new SelectChannelConnector();
         connector.setPort(Integer.parseInt(port));
         server.addConnector(connector);
  
+        ServletContextHandler servletHandler = new ServletContextHandler(null, "/", true, false);
+        
+        DefaultServlet sourceServlet = new DefaultServlet();
+        ServletHolder sourceHolder = new ServletHolder(sourceServlet);
+        sourceHolder.setInitParameter("resourceBase", oven.getContentsPath().getAbsolutePath());
+        sourceHolder.setInitParameter("pathInfoOnly", "true");
+        servletHandler.addServlet(sourceHolder, "/jb/source/*");
+        
+        DefaultServlet assetServlet = new DefaultServlet();
+        ServletHolder assetHolder = new ServletHolder(assetServlet);
+        assetHolder.setInitParameter("resourceBase", oven.getAssetsPath().getAbsolutePath());
+        assetHolder.setInitParameter("pathInfoOnly", "true");
+        servletHandler.addServlet(assetHolder, "/jb/assets/*");
+        
+        servletHandler.addServlet(new ServletHolder(new UpdateServlet(oven)), "/jb/update/*");
+        
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(true);
         resource_handler.setWelcomeFiles(new String[]{ "index.html" });
@@ -38,7 +58,7 @@ public class JettyServer {
         resource_handler.setResourceBase(path);
  
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[] { resource_handler, new DefaultHandler() });
+        handlers.setHandlers(new Handler[] { resource_handler, servletHandler, new DefaultHandler() });
         server.setHandler(handlers);
  
         LOGGER.info("Serving out contents of: [{}] on http://localhost:{}/", path, port);
