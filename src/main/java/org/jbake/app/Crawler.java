@@ -1,15 +1,8 @@
 package org.jbake.app;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import static java.io.File.separator;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.jbake.app.ConfigUtil.Keys;
-import org.jbake.model.DocumentStatus;
-import org.jbake.model.DocumentTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
 import java.util.Arrays;
@@ -20,7 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static java.io.File.separator;
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.jbake.model.DocumentStatus;
+import org.jbake.model.DocumentTypes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Crawls a file system looking for content.
@@ -113,10 +110,18 @@ public class Crawler {
     }
 
     private void crawlSourceFile(final File sourceFile, final String sha1, final String uri) {
-        Map<String, Object> fileContents = parser.processFile(sourceFile);
+        Map<String, Object> fileContents = parse(uri, sourceFile);
+        if (fileContents != null) {
+        	fileContents.put("sha1", sha1);
+        	String documentType = (String) fileContents.get("type");
+        	save(documentType, fileContents);
+        }
+    }
+
+	public Map<String, Object> parse(final String uri, final File sourceFile) {
+		Map<String, Object> fileContents = parser.processFile(sourceFile);
         if (fileContents != null) {
         	fileContents.put("rootpath", getPathToRoot(sourceFile));
-            fileContents.put("sha1", sha1);
             fileContents.put("rendered", false);
             if (fileContents.get("tags") != null) {
                 // store them as a String[]
@@ -124,9 +129,10 @@ public class Crawler {
                 fileContents.put("tags", tags);
             }
             fileContents.put("file", sourceFile.getPath());
+            
+            fileContents.put("sourceURI", uri);
             fileContents.put("uri", uri.substring(0, uri.lastIndexOf(".")) + FileUtil.findExtension(config, fileContents.get("type").toString()));
 
-            String documentType = (String) fileContents.get("type");
             if (fileContents.get("status").equals("published-date")) {
                 if (fileContents.get("date") != null && (fileContents.get("date") instanceof Date)) {
                     if (new Date().after((Date) fileContents.get("date"))) {
@@ -134,15 +140,19 @@ public class Crawler {
                     }
                 }
             }
-            ODocument doc = new ODocument(documentType);
-            doc.fields(fileContents);
-            boolean cached = fileContents.get("cached") != null ? Boolean.valueOf((String)fileContents.get("cached")):true;
-            doc.field("cached", cached);
-            doc.save();
         } else {
             LOGGER.warn("{} has an invalid header, it has been ignored!", sourceFile);
         }
+		return fileContents;
     }
+
+	private void save(String documentType, Map<String, Object> fileContents) {
+		ODocument doc = new ODocument(documentType);
+		doc.fields(fileContents);
+		boolean cached = fileContents.get("cached") != null ? Boolean.valueOf((String)fileContents.get("cached")):true;
+		doc.field("cached", cached);
+		doc.save();
+	}
 
     public String getPathToRoot(File sourceFile) {
     	File rootPath = new File(contentPath);

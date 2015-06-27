@@ -91,12 +91,7 @@ public class Main {
 		}
 		
 		if (res.isRunServer()) {
-			if (res.getSource().getPath().equals(".")) {
-				// use the default destination folder
-				runServer(config.getString(Keys.DESTINATION_FOLDER), config.getString(Keys.SERVER_PORT));
-			} else {
-				runServer(res.getSource().getPath(), config.getString(Keys.SERVER_PORT));
-			}
+			runServer(res, config);
 		}
 		
 	}
@@ -126,8 +121,21 @@ public class Main {
 		parser.printUsage(System.out);
 	}
 
-	private void runServer(String path, String port) {
-		JettyServer.run(path, port);
+	private void runServer(LaunchOptions options, CompositeConfiguration config) {
+		File source = options.getSource();
+		final Oven oven = new Oven(source, options.getDestination(), config, options.isClearCache());
+		oven.setupPaths();
+		
+		if (source.getPath().equals(".")) {
+			// use the default destination folder
+			runServer(config.getString(Keys.DESTINATION_FOLDER), config.getString(Keys.SERVER_PORT), oven);
+		} else {
+			runServer(source.getPath(), config.getString(Keys.SERVER_PORT), oven);
+		}
+	}
+	
+	private void runServer(String path, String port, Oven oven) {
+		JettyServer.run(path, port, oven);
 	}
 
 	private void initStructure(CompositeConfiguration config, String type, String source) {

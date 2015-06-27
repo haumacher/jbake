@@ -6,12 +6,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.apache.commons.configuration.CompositeConfiguration;
@@ -63,6 +61,22 @@ public class Oven {
 		this.isClearCache = isClearCache;
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
 		SLF4JBridgeHandler.install();
+	}
+	
+	public File getSource() {
+		return source;
+	}
+	
+	public File getContentsPath() {
+		return contentsPath;
+	}
+	
+	public File getAssetsPath() {
+		return assetsPath;
+	}
+	
+	public File getDestination() {
+		return destination;
 	}
 
     public CompositeConfiguration getConfig() {
@@ -130,26 +144,16 @@ public class Oven {
 	 * @throws JBakeException
 	 */
 	public void bake() {
-			final ContentStore db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
-            updateDocTypesFromConfiguration();
-            DBUtil.updateSchema(db);
+			final ContentStore db = init();
             try {
                 final long start = new Date().getTime();
                 LOGGER.info("Baking has started...");
                 clearCacheIfNeeded(db);
 
                 // process source content
-                Crawler crawler = new Crawler(db, source, config);
-                crawler.crawl(contentsPath);                
-                LOGGER.info("Content detected:");
-                for (String docType : DocumentTypes.getDocumentTypes()) {
-                	int count = crawler.getDocumentCount(docType);
-                	if (count > 0) {
-                		LOGGER.info("Parsed {} files of type: {}", count, docType);
-            		}
-                }
+                Crawler crawler = crawl(db);
                 
-                Renderer renderer = new Renderer(db, destination, templatesPath, config);
+                Renderer renderer = createRenderer(db);
 
                 for (String docType : DocumentTypes.getDocumentTypes()) {
                         for (ODocument document: db.getUnrenderedContent(docType)) {
@@ -227,6 +231,31 @@ public class Oven {
                 Orient.instance().shutdown();
         }
     }
+
+	public ContentStore init() {
+		final ContentStore db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
+		updateDocTypesFromConfiguration();
+		DBUtil.updateSchema(db);
+		return db;
+	}
+
+	public Crawler crawl(final ContentStore db) {
+		Crawler crawler = new Crawler(db, source, config);
+		crawler.crawl(contentsPath);                
+		LOGGER.info("Content detected:");
+		for (String docType : DocumentTypes.getDocumentTypes()) {
+			int count = crawler.getDocumentCount(docType);
+			if (count > 0) {
+				LOGGER.info("Parsed {} files of type: {}", count, docType);
+			}
+		}
+		return crawler;
+	}
+
+    public Renderer createRenderer(final ContentStore db) {
+		Renderer renderer = new Renderer(db, destination, templatesPath, config);
+		return renderer;
+	}
 
     /**
      * Iterates over the configuration, searching for keys like "template.index.file=..."
