@@ -33,7 +33,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jbake.model.DocumentTypes;
 
@@ -152,6 +155,16 @@ public class ContentStore {
     private void executeCommand(String query, Object... args) {
         db.command(new OCommandSQL(query)).execute(args);
     }
+
+    public Set<String> getTags() {
+		List<ODocument> query = getAllTagsFromPublishedPosts(); //query(new OSQLSynchQuery<ODocument>("select tags from post where status='published'"));
+	    Set<String> result = new HashSet<String>();
+	    for (ODocument document : query) {
+	        String[] tags = DBUtil.toStringArray(document.field("tags"));
+	        Collections.addAll(result, tags);
+	    }
+	    return result;
+	}
 
     private static void createDocType(final OSchema schema, final String doctype) {
         OClass page = schema.createClass(doctype);
