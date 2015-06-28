@@ -41,17 +41,20 @@ public class JettyServer {
         ServletHolder sourceHolder = new ServletHolder(sourceServlet);
         sourceHolder.setInitParameter("resourceBase", oven.getContentsPath().getAbsolutePath());
         sourceHolder.setInitParameter("pathInfoOnly", "true");
+        sourceHolder.setInitParameter("cacheControl", "public, max-age=0, s-maxage=0");
         servletHandler.addServlet(sourceHolder, "/jb/source/*");
         
         DefaultServlet assetServlet = new DefaultServlet();
         ServletHolder assetHolder = new ServletHolder(assetServlet);
         assetHolder.setInitParameter("resourceBase", oven.getAssetsPath().getAbsolutePath());
         assetHolder.setInitParameter("pathInfoOnly", "true");
+        assetHolder.setInitParameter("cacheControl", "public, max-age=0, s-maxage=0");
         servletHandler.addServlet(assetHolder, "/jb/assets/*");
         
         servletHandler.addServlet(new ServletHolder(new UpdateServlet(oven)), "/jb/update/*");
         
         ResourceHandler resource_handler = new ResourceHandler();
+        resource_handler.setCacheControl("public, max-age=0, s-maxage=0");
         resource_handler.setDirectoriesListed(true);
         resource_handler.setWelcomeFiles(new String[]{ "index.html" });
  
