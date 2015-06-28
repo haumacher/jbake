@@ -240,7 +240,7 @@ public class Oven {
 	}
 
 	public Crawler crawl(final ContentStore db) {
-		Crawler crawler = new Crawler(db, source, config);
+		Crawler crawler = createCrawler(db);
 		crawler.crawl(contentsPath);                
 		LOGGER.info("Content detected:");
 		for (String docType : DocumentTypes.getDocumentTypes()) {
@@ -250,6 +250,10 @@ public class Oven {
 			}
 		}
 		return crawler;
+	}
+
+	public Crawler createCrawler(final ContentStore db) {
+		return new Crawler(db, source, config);
 	}
 
     public Renderer createRenderer(final ContentStore db) {
