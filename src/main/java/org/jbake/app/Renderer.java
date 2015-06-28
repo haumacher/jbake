@@ -85,7 +85,7 @@ public class Renderer {
 
         try {
             Writer out = createWriter(outputFile);
-            renderDocument(content, out);
+            renderDocument(content, out, false);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -98,10 +98,13 @@ public class Renderer {
         return outputFile;
     }
 
-	public void renderDocument(Map<String, Object> content, Writer out) throws RenderingException {
+	public void renderDocument(Map<String, Object> content, Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("content", content);
 		model.put("renderer", renderingEngine);
+		if (wikiMode) {
+			setWikiMode(model);
+		}
 		renderingEngine.renderDocument(model, findTemplateName(docType(content)), out);
 	}
 
@@ -132,7 +135,7 @@ public class Renderer {
 
         try {
             Writer out = createWriter(outputFile);
-            renderIndex(out);
+            renderIndex(out, false);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -143,10 +146,13 @@ public class Renderer {
         }
     }
 
-	public void renderIndex(Writer out) throws RenderingException {
+	public void renderIndex(Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("renderer", renderingEngine);
 		model.put("content", buildSimpleModel("masterindex"));
+		if (wikiMode) {
+			setWikiMode(model);
+		}
 		renderingEngine.renderDocument(model, findTemplateName("masterindex"), out);
 	}
 
@@ -164,7 +170,7 @@ public class Renderer {
 
         try {
             Writer out = createWriter(outputFile);
-            renderSitemap(out);
+            renderSitemap(out, false);
             sb.append("done!");
             out.close();
             LOGGER.info(sb.toString());
@@ -175,10 +181,13 @@ public class Renderer {
         }
     }
 
-	public void renderSitemap(Writer out) throws RenderingException {
+	public void renderSitemap(Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("renderer", renderingEngine);
 		model.put("content", buildSimpleModel("sitemap"));
+		if (wikiMode) {
+			setWikiMode(model);
+		}
 		renderingEngine.renderDocument(model, findTemplateName("sitemap"), out);
 	}
 
@@ -195,7 +204,7 @@ public class Renderer {
 
         try {
             Writer out = createWriter(outputFile);
-            renderFeed(out);
+            renderFeed(out, false);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -206,10 +215,13 @@ public class Renderer {
         }
     }
 
-	public void renderFeed(Writer out) throws RenderingException {
+	public void renderFeed(Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("renderer", renderingEngine);
 		model.put("content", buildSimpleModel("feed"));
+		if (wikiMode) {
+			setWikiMode(model);
+		}
 		renderingEngine.renderDocument(model, findTemplateName("feed"), out);
 	}
 
@@ -226,7 +238,7 @@ public class Renderer {
 
         try {
             Writer out = createWriter(outputFile);
-            renderArchive(out);
+            renderArchive(out, false);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -237,10 +249,13 @@ public class Renderer {
         }
     }
 
-	public void renderArchive(Writer out) throws RenderingException {
+	public void renderArchive(Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("renderer", renderingEngine);
 		model.put("content", buildSimpleModel("archive"));
+		if (wikiMode) {
+			setWikiMode(model);
+		}
 		renderingEngine.renderDocument(model, findTemplateName("archive"), out);
 	}
 
@@ -261,7 +276,7 @@ public class Renderer {
 
             try {
                 Writer out = createWriter(outputFile);
-                renderTag(tag, out);
+                renderTag(tag, out, false);
                 out.close();
                 sb.append("done!");
                 LOGGER.info(sb.toString());
@@ -281,13 +296,16 @@ public class Renderer {
         }
     }
 
-	public void renderTag(String tag, Writer out) throws RenderingException {
+	public void renderTag(String tag, Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("renderer", renderingEngine);
 		model.put("tag", tag);
 		Map<String, Object> map = buildSimpleModel("tag");
 		map.put("rootpath", "../");
 		model.put("content", map);
+		if (wikiMode) {
+			setWikiMode(model);
+		}
 		renderingEngine.renderDocument(model, findTemplateName("tag"), out);
 	}
     
@@ -304,4 +322,13 @@ public class Renderer {
     	// add any more keys here that need to have a default value to prevent need to perform null check in templates
     	return content;
     }
+
+    /**
+     * Sets the flag indicating the the document is rendered for online view. 
+     * 
+     * @param document The document properties to modify.
+     */
+	private static void setWikiMode(Map<String, Object> document) {
+		document.put("wikibake", Boolean.TRUE);
+	}
 }
