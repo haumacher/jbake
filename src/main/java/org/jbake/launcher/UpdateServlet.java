@@ -36,13 +36,10 @@ import org.jbake.app.ContentStore;
 import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
 import org.jbake.app.Renderer;
-import org.jbake.parser.Engines;
 
 public class UpdateServlet extends HttpServlet {
 
 	public static final String JB_ASSETS_URI = "/jb/assets/";
-
-	public static final String JB_OUTPUT_URI = "/jb/output/";
 
 	private final Oven oven;
 	
@@ -52,79 +49,15 @@ public class UpdateServlet extends HttpServlet {
 
 	private Renderer renderer;
 
-	private String[] sourceExtensions;
-
-	private File assets;
-
 	public UpdateServlet(Oven oven) {
 		this.oven = oven;
 		
 		ContentStore db = oven.init();
-    	crawler = oven.crawl(db);
+    	crawler = oven.createCrawler(db);
     	renderer = oven.createRenderer(db);
     	source = oven.getContentsPath();
-    	assets = oven.getAssetsPath();
-    	sourceExtensions = Engines.getRecognizedExtensions().toArray(new String[0]);
 	}
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		String path = req.getPathInfo();
-		if (path.startsWith("/")) {
-			path = path.substring(1);
-		}
-		
-		if (path.contains("..") || path.contains(":") || path.contains("\\")) {
-			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-		
-		File testFile = new File(source, path);
-		if (testFile.isDirectory()) {
-			if (!path.endsWith("/")) {
-				resp.sendRedirect(req.getContextPath() + "/" + path + "/");
-				return;
-			}
-
-			path = path + "index.html";
-		}
-		
-		String barePath;
-		int extIndex = path.lastIndexOf('.');
-		if (extIndex >= 0) {
-			barePath = path.substring(0, extIndex);
-		} else {
-			barePath = path;
-		}
-		
-		File sourceFile = null;
-		for (String sourceExtension : sourceExtensions) {
-			sourceFile = new File(source, barePath + '.' + sourceExtension);
-			if (sourceFile.exists() && !sourceFile.isDirectory()) {
-				break;
-			}
-		}
-		
-		if (sourceFile != null) {
-			Map<String, Object> document = crawler.parse(path, sourceFile);
-			try {
-				renderer.render(document);
-			} catch (Exception ex) {
-				throw new RuntimeException(ex);
-			}
-			
-			req.getRequestDispatcher(JB_OUTPUT_URI + path).forward(req, resp);
-		} else {
-			File assetFile = new File(assets, path);
-			if (assetFile.exists()) {
-				req.getRequestDispatcher(JB_ASSETS_URI + path).forward(req, resp);
-			} else {
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			}
-		}
-	}
-	
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {

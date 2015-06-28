@@ -3,6 +3,7 @@ package org.jbake.app;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.template.DelegatingTemplateEngine;
+import org.jbake.template.RenderingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,7 @@ public class Renderer {
      * @throws Exception
      */
     public File render(Map<String, Object> content) throws Exception {
-    	String docType = (String) content.get("type");
+    	String docType = docType(content);
         String outputFilename = destination.getPath() + File.separatorChar + (String) content.get("uri");
         outputFilename = outputFilename.substring(0, outputFilename.lastIndexOf("."));
 
@@ -78,13 +79,10 @@ public class Renderer {
         File outputFile = new File(outputFilename + FileUtil.findExtension(config,docType));
         StringBuilder sb = new StringBuilder();
         sb.append("Rendering [").append(outputFile).append("]... ");
-        Map<String, Object> model = new HashMap<String, Object>();
-        model.put("content", content);
-        model.put("renderer", renderingEngine);
 
         try {
             Writer out = createWriter(outputFile);
-            renderingEngine.renderDocument(model, findTemplateName(docType), out);
+            renderDocument(content, out);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -96,6 +94,18 @@ public class Renderer {
         
         return outputFile;
     }
+
+	public void renderDocument(Map<String, Object> content, Writer out) throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("content", content);
+		model.put("renderer", renderingEngine);
+		renderingEngine.renderDocument(model, findTemplateName(docType(content)), out);
+	}
+
+	private String docType(Map<String, Object> content) {
+		String docType = (String) content.get("type");
+		return docType;
+	}
 
     private Writer createWriter(File file) throws IOException {
         if (!file.exists()) {
