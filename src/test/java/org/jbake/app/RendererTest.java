@@ -1,13 +1,8 @@
 package org.jbake.app;
 
-import org.jbake.app.ConfigUtil.Keys;
-import org.jbake.model.DocumentTypes;
-import org.junit.After;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
-
-import static org.assertj.core.api.Assertions.*;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -15,6 +10,9 @@ import java.util.Map;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.io.FileUtils;
+import org.jbake.app.ConfigUtil.Keys;
+import org.jbake.model.DocumentTypes;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -168,7 +166,7 @@ public class RendererTest {
         Crawler crawler = new Crawler(db, sourceFolder, config);
         crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
-        renderer.renderTags(crawler.getTags(), "tags");
+        renderer.renderTags("tags");
         
         // verify
         File outputFile = new File(destinationFolder + File.separator + "tags" + File.separator + "blog.html");

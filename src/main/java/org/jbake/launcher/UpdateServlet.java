@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.util.ajax.JSON;
-import org.jbake.app.ContentStore;
 import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
 import org.jbake.app.Renderer;
@@ -52,9 +51,8 @@ public class UpdateServlet extends HttpServlet {
 	public UpdateServlet(Oven oven) {
 		this.oven = oven;
 		
-		ContentStore db = oven.init();
-    	crawler = oven.createCrawler(db);
-    	renderer = oven.createRenderer(db);
+    	crawler = oven.getCrawler();
+    	renderer = oven.getRenderer();
     	source = oven.getContentsPath();
 	}
 
@@ -95,7 +93,6 @@ public class UpdateServlet extends HttpServlet {
 					CharBuffer buffer = CharBuffer.allocate(1024);
 					while (in.read(buffer) >= 0) {
 						buffer.flip();
-						System.out.println(buffer);
 						writer.append(buffer);
 						buffer.clear();
 					}

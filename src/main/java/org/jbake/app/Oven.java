@@ -41,6 +41,12 @@ public class Oven {
 	private List<Throwable> errors = new LinkedList<Throwable>();
 	private int renderedCount = 0;
 
+	private ContentStore _db;
+
+	private Renderer _renderer;
+
+	private Crawler _crawler;
+
     /**
      * Delegate c'tor to prevent API break for the moment.
      */
@@ -144,16 +150,16 @@ public class Oven {
 	 * @throws JBakeException
 	 */
 	public void bake() {
-			final ContentStore db = init();
+			final ContentStore db = getDB();
             try {
                 final long start = new Date().getTime();
                 LOGGER.info("Baking has started...");
                 clearCacheIfNeeded(db);
 
                 // process source content
-                Crawler crawler = crawl(db);
+                crawl();
                 
-                Renderer renderer = createRenderer(db);
+                Renderer renderer = getRenderer();
 
                 for (String docType : DocumentTypes.getDocumentTypes()) {
                         for (ODocument document: db.getUnrenderedContent(docType)) {
@@ -205,7 +211,7 @@ public class Oven {
                 // write tag files
                 if (config.getBoolean(Keys.RENDER_TAGS)) {
                         try {
-                                renderer.renderTags(crawler.getTags(), config.getString(Keys.TAG_PATH));
+                                renderer.renderTags(config.getString(Keys.TAG_PATH));
                         } catch (Exception e) {
                                 errors.add(e);
                         }
@@ -232,15 +238,17 @@ public class Oven {
         }
     }
 
-	public ContentStore init() {
-		final ContentStore db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
-		updateDocTypesFromConfiguration();
-		DBUtil.updateSchema(db);
-		return db;
+	public ContentStore getDB() {
+		if (_db == null) {
+			_db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
+			updateDocTypesFromConfiguration();
+			DBUtil.updateSchema(_db);
+		}
+		return _db;
 	}
 
-	public Crawler crawl(final ContentStore db) {
-		Crawler crawler = createCrawler(db);
+	public void crawl() {
+		Crawler crawler = getCrawler();
 		crawler.crawl(contentsPath);                
 		LOGGER.info("Content detected:");
 		for (String docType : DocumentTypes.getDocumentTypes()) {
@@ -249,16 +257,20 @@ public class Oven {
 				LOGGER.info("Parsed {} files of type: {}", count, docType);
 			}
 		}
-		return crawler;
 	}
 
-	public Crawler createCrawler(final ContentStore db) {
-		return new Crawler(db, source, config);
+	public Crawler getCrawler() {
+		if (_crawler == null) {
+			_crawler = new Crawler(getDB(), source, config);
+		}
+		return _crawler;
 	}
 
-    public Renderer createRenderer(final ContentStore db) {
-		Renderer renderer = new Renderer(db, destination, templatesPath, config);
-		return renderer;
+    public Renderer getRenderer() {
+    	if (_renderer == null) {
+    		_renderer = new Renderer(getDB(), destination, templatesPath, config);
+    	}
+		return _renderer;
 	}
 
     /**

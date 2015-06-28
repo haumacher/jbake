@@ -29,6 +29,8 @@ public class Renderer {
 
     // TODO: should all content be made available to all templates via this class??
 
+    private final ContentStore db;
+    
     private File destination;
     private CompositeConfiguration config;
     private final DelegatingTemplateEngine renderingEngine;
@@ -40,7 +42,8 @@ public class Renderer {
      * @param templatesPath The templates folder
      */
     public Renderer(ContentStore db, File destination, File templatesPath, CompositeConfiguration config) {
-        this.destination = destination;
+        this.db = db;
+		this.destination = destination;
         this.config = config;
         this.renderingEngine = new DelegatingTemplateEngine(config, db, destination, templatesPath);
     }
@@ -128,13 +131,10 @@ public class Renderer {
         File outputFile = new File(destination.getPath() + File.separator + indexFile);
         StringBuilder sb = new StringBuilder();
         sb.append("Rendering index [").append(outputFile).append("]...");
-        Map<String, Object> model = new HashMap<String, Object>();
-        model.put("renderer", renderingEngine);
-        model.put("content", buildSimpleModel("masterindex"));
 
         try {
             Writer out = createWriter(outputFile);
-            renderingEngine.renderDocument(model, findTemplateName("masterindex"), out);
+            renderIndex(out);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -144,6 +144,13 @@ public class Renderer {
             throw new Exception("Failed to render index. Cause: " + e.getMessage(), e);
         }
     }
+
+	public void renderIndex(Writer out) throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put("content", buildSimpleModel("masterindex"));
+		renderingEngine.renderDocument(model, findTemplateName("masterindex"), out);
+	}
 
     /**
      * Render an XML sitemap file using the supplied content.
@@ -157,13 +164,9 @@ public class Renderer {
         StringBuilder sb = new StringBuilder();
         sb.append("Rendering sitemap [").append(outputFile).append("]... ");
 
-        Map<String, Object> model = new HashMap<String, Object>();
-        model.put("renderer", renderingEngine);
-        model.put("content", buildSimpleModel("sitemap"));
-
         try {
             Writer out = createWriter(outputFile);
-            renderingEngine.renderDocument(model, findTemplateName("sitemap"), out);
+            renderSitemap(out);
             sb.append("done!");
             out.close();
             LOGGER.info(sb.toString());
@@ -173,6 +176,13 @@ public class Renderer {
             throw new Exception("Failed to render sitemap. Cause: " + e.getMessage(), e);
         }
     }
+
+	public void renderSitemap(Writer out) throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put("content", buildSimpleModel("sitemap"));
+		renderingEngine.renderDocument(model, findTemplateName("sitemap"), out);
+	}
 
     /**
      * Render an XML feed file using the supplied content.
@@ -184,13 +194,10 @@ public class Renderer {
         File outputFile = new File(destination.getPath() + File.separator + feedFile);
         StringBuilder sb = new StringBuilder();
         sb.append("Rendering feed [").append(outputFile).append("]... ");
-        Map<String, Object> model = new HashMap<String, Object>();
-        model.put("renderer", renderingEngine);
-        model.put("content", buildSimpleModel("feed"));
 
         try {
             Writer out = createWriter(outputFile);
-            renderingEngine.renderDocument(model, findTemplateName("feed"), out);
+            renderFeed(out);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -200,6 +207,13 @@ public class Renderer {
             throw new Exception("Failed to render feed. Cause: " + e.getMessage(), e);
         }
     }
+
+	public void renderFeed(Writer out) throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put("content", buildSimpleModel("feed"));
+		renderingEngine.renderDocument(model, findTemplateName("feed"), out);
+	}
 
     /**
      * Render an archive file using the supplied content.
@@ -211,13 +225,10 @@ public class Renderer {
         File outputFile = new File(destination.getPath() + File.separator + archiveFile);
         StringBuilder sb = new StringBuilder();
         sb.append("Rendering archive [").append(outputFile).append("]... ");
-        Map<String, Object> model = new HashMap<String, Object>();
-        model.put("renderer", renderingEngine);
-        model.put("content", buildSimpleModel("archive"));
 
         try {
             Writer out = createWriter(outputFile);
-            renderingEngine.renderDocument(model, findTemplateName("archive"), out);
+            renderArchive(out);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -228,6 +239,13 @@ public class Renderer {
         }
     }
 
+	public void renderArchive(Writer out) throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put("content", buildSimpleModel("archive"));
+		renderingEngine.renderDocument(model, findTemplateName("archive"), out);
+	}
+
     /**
      * Render tag files using the supplied content.
      *
@@ -235,23 +253,17 @@ public class Renderer {
      * @param tagPath The output path
      * @throws Exception 
      */
-    public void renderTags(Set<String> tags, String tagPath) throws Exception {
+    public void renderTags(String tagPath) throws Exception {
+    	Set<String> tags = db.getTags();
     	final List<Throwable> errors = new LinkedList<Throwable>();
         for (String tag : tags) {
-            Map<String, Object> model = new HashMap<String, Object>();
-            model.put("renderer", renderingEngine);
-            model.put("tag", tag);
-            Map<String, Object> map = buildSimpleModel("tag");
-            map.put("rootpath", "../");
-            model.put("content", map);
-
             File outputFile = new File(destination.getPath() + File.separator + tagPath + File.separator + tag + config.getString(Keys.OUTPUT_EXTENSION));
             StringBuilder sb = new StringBuilder();
             sb.append("Rendering tags [").append(outputFile).append("]... ");
 
             try {
                 Writer out = createWriter(outputFile);
-                renderingEngine.renderDocument(model, findTemplateName("tag"), out);
+                renderTag(tag, out);
                 out.close();
                 sb.append("done!");
                 LOGGER.info(sb.toString());
@@ -270,6 +282,16 @@ public class Renderer {
         	throw new Exception(sb.toString(), errors.get(0));
         }
     }
+
+	public void renderTag(String tag, Writer out) throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put("tag", tag);
+		Map<String, Object> map = buildSimpleModel("tag");
+		map.put("rootpath", "../");
+		model.put("content", map);
+		renderingEngine.renderDocument(model, findTemplateName("tag"), out);
+	}
     
     /**
      * Builds simple map of values, which are exposed when rendering index/archive/sitemap/feed/tags.

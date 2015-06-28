@@ -2,7 +2,6 @@ package org.jbake.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -21,7 +20,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Scanner;
 
 public class ThymeleafRendererTest {
 
@@ -180,7 +178,7 @@ public class ThymeleafRendererTest {
         Crawler crawler = new Crawler(db, sourceFolder, config);
         crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
-        renderer.renderTags(crawler.getTags(), "tags");
+        renderer.renderTags("tags");
         
         // verify
         File outputFile = new File(destinationFolder + File.separator + "tags" + File.separator + "blog.html");

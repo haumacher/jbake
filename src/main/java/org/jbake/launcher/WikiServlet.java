@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jbake.app.ContentStore;
 import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
 import org.jbake.app.Renderer;
@@ -47,9 +46,8 @@ public class WikiServlet extends HttpServlet {
 	public WikiServlet(Oven oven) {
 		this.oven = oven;
 		
-		ContentStore db = oven.init();
-    	crawler = oven.createCrawler(db);
-    	renderer = oven.createRenderer(db);
+    	crawler = oven.getCrawler();
+    	renderer = oven.getRenderer();
     	source = oven.getContentsPath();
     	sourceExtensions = Engines.getRecognizedExtensions().toArray(new String[0]);
 	}
@@ -69,7 +67,7 @@ public class WikiServlet extends HttpServlet {
 		
 		File testFile = new File(source, path);
 		if (testFile.isDirectory()) {
-			if (!path.endsWith("/")) {
+			if (!path.endsWith("/") && !path.isEmpty()) {
 				resp.sendRedirect(req.getContextPath() + "/" + path + "/");
 				return;
 			}

@@ -6,9 +6,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -174,13 +172,7 @@ public class Crawler {
     }
 
     public Set<String> getTags() {
-        List<ODocument> query = db.getAllTagsFromPublishedPosts(); //query(new OSQLSynchQuery<ODocument>("select tags from post where status='published'"));
-        Set<String> result = new HashSet<String>();
-        for (ODocument document : query) {
-            String[] tags = DBUtil.toStringArray(document.field("tags"));
-            Collections.addAll(result, tags);
-        }
-        return result;
+        return db.getTags();
     }
 
     private DocumentStatus findDocumentStatus(String docType, String uri, String sha1) {
