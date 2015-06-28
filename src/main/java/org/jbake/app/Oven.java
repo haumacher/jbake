@@ -43,7 +43,7 @@ public class Oven {
 
 	private ContentStore _db;
 
-	private Renderer _renderer;
+	private volatile Renderer _renderer;
 
 	private Crawler _crawler;
 
@@ -79,6 +79,10 @@ public class Oven {
 	
 	public File getAssetsPath() {
 		return assetsPath;
+	}
+	
+	public File getTemplatesPath() {
+		return templatesPath;
 	}
 	
 	public File getDestination() {
@@ -267,11 +271,16 @@ public class Oven {
 	}
 
     public Renderer getRenderer() {
-    	if (_renderer == null) {
-    		_renderer = new Renderer(getDB(), destination, templatesPath, config);
+    	Renderer result = _renderer;
+		if (result == null) {
+    		_renderer = result = new Renderer(getDB(), destination, templatesPath, config);
     	}
-		return _renderer;
+		return result;
 	}
+    
+    public void resetRenderer() {
+    	_renderer = null;
+    }
 
     /**
      * Iterates over the configuration, searching for keys like "template.index.file=..."

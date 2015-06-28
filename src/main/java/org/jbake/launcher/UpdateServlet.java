@@ -15,9 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.util.ajax.JSON;
-import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
-import org.jbake.app.Renderer;
 
 public class UpdateServlet extends HttpServlet {
 
@@ -27,15 +25,9 @@ public class UpdateServlet extends HttpServlet {
 	
 	private final File source;
 
-	private Crawler crawler;
-
-	private Renderer renderer;
-
 	public UpdateServlet(Oven oven) {
 		this.oven = oven;
 		
-    	crawler = oven.getCrawler();
-    	renderer = oven.getRenderer();
     	source = oven.getContentsPath();
 	}
 
@@ -53,20 +45,25 @@ public class UpdateServlet extends HttpServlet {
 		}
 		
 		File sourceFile = new File(source, sourceuri);
-		if (!sourceFile.exists()) {
-			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+		if (!sourceFile.getParentFile().exists()) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Parent directory of saved file does not exist.");
 			return;
 		}
 		
 		resp.setContentType("text/json");
 		resp.setCharacterEncoding("utf-8");
 		
-		File backup = new File(source, sourceuri + "~");
-		if (backup.exists()) {
-			backup.delete();
+		File backup;
+		if (sourceFile.exists()) {
+			backup = new File(source, sourceuri + "~");
+			if (backup.exists()) {
+				backup.delete();
+			}
+			
+			sourceFile.renameTo(backup);
+		} else {
+			backup = null;
 		}
-		
-		sourceFile.renameTo(backup);
 		
 		Map<String, Object> document;
 		try {
@@ -88,9 +85,9 @@ public class UpdateServlet extends HttpServlet {
 				out.close();
 			}
 			
-			document = crawler.parse(sourceuri, sourceFile);
+			document = oven.getCrawler().parse(sourceuri, sourceFile);
 			try {
-				renderer.render(document);
+				oven.getRenderer().render(document);
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -110,8 +107,10 @@ public class UpdateServlet extends HttpServlet {
 	}
 
 	private void revert(File sourceFile, File backup) {
-		sourceFile.delete();
-		backup.renameTo(sourceFile);
+		if (backup != null) {
+			sourceFile.delete();
+			backup.renameTo(sourceFile);
+		}
 	}
 
 }

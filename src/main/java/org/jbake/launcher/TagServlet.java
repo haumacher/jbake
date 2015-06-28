@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.app.Oven;
-import org.jbake.app.Renderer;
 import org.jbake.template.RenderingException;
 
 /**
@@ -21,12 +20,10 @@ import org.jbake.template.RenderingException;
 public class TagServlet extends HttpServlet {
 
 	private final Oven _oven;
-	private final Renderer _renderer;
 	private String _outputExtension;
 
 	public TagServlet(Oven oven) {
 		_oven = oven;
-		_renderer = oven.getRenderer();
 		CompositeConfiguration config = oven.getConfig();
 		_outputExtension = config.getString(Keys.OUTPUT_EXTENSION);
 	}
@@ -45,7 +42,7 @@ public class TagServlet extends HttpServlet {
 			resp.setContentType("text/html");
 			resp.setCharacterEncoding("utf-8");
 			resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
-			_renderer.renderTag(tag, resp.getWriter());
+			_oven.getRenderer().renderTag(tag, resp.getWriter());
 		} catch (RenderingException ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
