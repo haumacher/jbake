@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jbake.app.Oven;
-import org.jbake.app.Renderer;
 import org.jbake.template.RenderingException;
 
 /**
@@ -19,11 +18,9 @@ import org.jbake.template.RenderingException;
 public class SitemapServlet extends HttpServlet {
 
 	private final Oven _oven;
-	private final Renderer _renderer;
 
 	public SitemapServlet(Oven oven) {
 		_oven = oven;
-		_renderer = oven.getRenderer();
 	}
 
 	@Override
@@ -33,7 +30,7 @@ public class SitemapServlet extends HttpServlet {
 			resp.setContentType("text/xml");
 			resp.setCharacterEncoding("utf-8");
 			resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
-			_renderer.renderSitemap(resp.getWriter());
+			_oven.getRenderer().renderSitemap(resp.getWriter());
 		} catch (RenderingException ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}

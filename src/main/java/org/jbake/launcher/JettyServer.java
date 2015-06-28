@@ -1,5 +1,6 @@
 package org.jbake.launcher;
 
+import java.io.File;
 import java.net.MalformedURLException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.app.Oven;
+import org.jbake.app.Renderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,8 @@ public class JettyServer {
 	public static void run(String path, String port, Oven oven) {
 		// Initi database.
 		oven.crawl();
+		
+		watch(oven);
 		
 		Server server = new Server();
 		SelectChannelConnector connector = new SelectChannelConnector();
@@ -108,6 +112,61 @@ public class JettyServer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Reset the {@link Renderer} whenever the templates change in the filesystem.
+	 * 
+	 * <p>
+	 * Note: With Java 7, this could be formulated more efficiently using the Path API.
+	 * </p>
+	 * 
+	 * @param oven The {@link Oven} to watch.
+	 */
+	private static void watch(final Oven oven) {
+		Thread watcher = new Thread("Filesystem watcher") {
+
+			long _timestamp = System.currentTimeMillis();
+			
+			@Override
+			public void run() {
+				while (true) {
+					if (check(oven.getTemplatesPath())) {
+						LOGGER.info("Templates changed, resetting renderer.");
+						_timestamp = System.currentTimeMillis();
+						oven.resetRenderer();
+					}
+					try {
+						Thread.sleep(3000);
+					} catch (InterruptedException ex) {
+						break;
+					}
+				}
+			}
+
+			private boolean check(File path) {
+				for (File file : path.listFiles()) {
+					if (file.getName().startsWith(".")) {
+						continue;
+					}
+					if (file.isDirectory()) {
+						if (check(file)) {
+							return true;
+						}
+					} else {
+						long lastModified = file.lastModified();
+						if (lastModified > _timestamp) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+			
+		};
+		
+		watcher.setDaemon(true);
+		watcher.start();
 	}
 
 	private static String uri(String path) {

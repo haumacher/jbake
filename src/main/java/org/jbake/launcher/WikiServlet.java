@@ -9,9 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
-import org.jbake.app.Renderer;
 import org.jbake.parser.Engines;
 
 public class WikiServlet extends HttpServlet {
@@ -20,17 +18,11 @@ public class WikiServlet extends HttpServlet {
 	
 	private final File source;
 
-	private Crawler crawler;
-
-	private Renderer renderer;
-
 	private String[] sourceExtensions;
 
 	public WikiServlet(Oven oven) {
 		this.oven = oven;
 		
-    	crawler = oven.getCrawler();
-    	renderer = oven.getRenderer();
     	source = oven.getContentsPath();
     	sourceExtensions = Engines.getRecognizedExtensions().toArray(new String[0]);
 	}
@@ -77,13 +69,13 @@ public class WikiServlet extends HttpServlet {
 		}
 		
 		if (sourceUri != null) {
-			Map<String, Object> document = crawler.parse(sourceUri, sourceFile);
+			Map<String, Object> document = oven.getCrawler().parse(sourceUri, sourceFile);
 			try {
 				resp.setContentType("text/html");
 				resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
 
 				document.put("wikibake", Boolean.TRUE);
-				renderer.renderDocument(document, resp.getWriter());
+				oven.getRenderer().renderDocument(document, resp.getWriter());
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
