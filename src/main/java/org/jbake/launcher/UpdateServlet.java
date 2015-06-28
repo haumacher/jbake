@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.jetty.util.ajax.JSON;
 import org.jbake.app.ContentStore;
 import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
@@ -183,68 +184,14 @@ public class UpdateServlet extends HttpServlet {
 		}
 		
 		Map<String, Object> document = crawler.parse(sourceuri, sourceFile);
-    	File outputFile;
 		try {
-			outputFile = renderer.render(document);
+			renderer.render(document);
 		} catch (Exception ex) {
 			throw new RuntimeException(ex);
 		}
 		
 		PrintWriter out = resp.getWriter();
-		out.write("{\"body\":\"");
-		CharSequence buffer = (CharSequence) document.get("body");
-		int start = 0;
-		int limit = buffer.length();
-		for (int n = start; n < limit; n++) {
-			char ch = buffer.charAt(n);
-			switch (ch) {
-			case '\b': //  Backspace (ascii code 08)
-			{
-				out.append(buffer, start, n);
-				out.append("\\b");
-				start = n + 1;
-				break;
-			}
-			case '\f': // Form feed (ascii code 0C)
-			{
-				out.append(buffer, start, n);
-				out.append("\\f");
-				start = n + 1;
-				break;
-			}
-			case '\n': // New line
-			{
-				out.append(buffer, start, n);
-				out.append("\\n");
-				start = n + 1;
-				break;
-			}
-			case '\r': // Carriage return
-			{
-				out.append(buffer, start, n);
-				out.append("\\r");
-				start = n + 1;
-				break;
-			}
-			case '\t': // Tab
-			{
-				out.append(buffer, start, n);
-				out.append("\\t");
-				start = n + 1;
-				break;
-			}
-			case '\"': // Double quote
-			case '\\': // Backslash caracter
-			{
-				out.append(buffer, start, n);
-				out.append("\\");
-				start = n;
-				break;
-			}
-			}
-		}
-		out.append(buffer, start, limit);
-		out.write("\"}");
+		new JSON().append(out, document);
 	}
 
 }
