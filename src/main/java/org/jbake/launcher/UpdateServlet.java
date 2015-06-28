@@ -45,9 +45,9 @@ public class UpdateServlet extends HttpServlet {
 		}
 		
 		File sourceFile = new File(source, sourceuri);
-		if (!sourceFile.getParentFile().exists()) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Parent directory of saved file does not exist.");
-			return;
+		File dir = sourceFile.getParentFile();
+		if (!dir.exists()) {
+			dir.mkdirs();
 		}
 		
 		resp.setContentType("text/json");
