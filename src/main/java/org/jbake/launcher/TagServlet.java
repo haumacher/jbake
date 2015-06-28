@@ -42,7 +42,7 @@ public class TagServlet extends HttpServlet {
 			resp.setContentType("text/html");
 			resp.setCharacterEncoding("utf-8");
 			resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
-			_oven.getRenderer().renderTag(tag, resp.getWriter());
+			_oven.getRenderer().renderTag(tag, resp.getWriter(), true);
 		} catch (RenderingException ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}

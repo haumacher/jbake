@@ -74,8 +74,7 @@ public class WikiServlet extends HttpServlet {
 				resp.setContentType("text/html");
 				resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
 
-				document.put("wikibake", Boolean.TRUE);
-				oven.getRenderer().renderDocument(document, resp.getWriter());
+				oven.getRenderer().renderDocument(document, resp.getWriter(), true);
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
