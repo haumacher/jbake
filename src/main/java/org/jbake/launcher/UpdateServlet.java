@@ -84,6 +84,8 @@ public class UpdateServlet extends HttpServlet {
 		}
 		
 		sourceFile.renameTo(backup);
+		
+		Map<String, Object> document;
 		try {
 			FileOutputStream out = new FileOutputStream(sourceFile);
 			try {
@@ -102,26 +104,31 @@ public class UpdateServlet extends HttpServlet {
 			} finally {
 				out.close();
 			}
+			
+			document = crawler.parse(sourceuri, sourceFile);
+			try {
+				renderer.render(document);
+			} catch (Exception ex) {
+				throw new RuntimeException(ex);
+			}
 		} catch (Error ex) {
-			backup.renameTo(sourceFile);
+			revert(sourceFile, backup);
 			throw ex;
 		} catch (IOException ex) {
-			backup.renameTo(sourceFile);
+			revert(sourceFile, backup);
 			throw ex;
 		} catch (RuntimeException ex) {
-			backup.renameTo(sourceFile);
+			revert(sourceFile, backup);
 			throw ex;
-		}
-		
-		Map<String, Object> document = crawler.parse(sourceuri, sourceFile);
-		try {
-			renderer.render(document);
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
 		}
 		
 		PrintWriter out = resp.getWriter();
 		new JSON().append(out, document);
+	}
+
+	private void revert(File sourceFile, File backup) {
+		sourceFile.delete();
+		backup.renameTo(sourceFile);
 	}
 
 }
