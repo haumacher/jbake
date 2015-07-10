@@ -73,6 +73,13 @@ public class JettyServer {
 			servletHandler.addServlet(new ServletHolder(new SitemapServlet(oven)), "/" + uri);
         }
         
+        DefaultServlet jbServlet = new DefaultServlet();
+        ServletHolder jbHolder = new ServletHolder(jbServlet);
+        jbHolder.setInitParameter("resourceBase", JettyServer.class.getResource("/org/jbake/server/webapp").toExternalForm());
+        jbHolder.setInitParameter("pathInfoOnly", "true");
+        jbHolder.setInitParameter("cacheControl", "public, max-age=0, s-maxage=0");
+        servletHandler.addServlet(jbHolder, "/jb/wiki/*");
+        
         DefaultServlet sourceServlet = new DefaultServlet();
         ServletHolder sourceHolder = new ServletHolder(sourceServlet);
         sourceHolder.setInitParameter("resourceBase", oven.getContentsPath().getAbsolutePath());
