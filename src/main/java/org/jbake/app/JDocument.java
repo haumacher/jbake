@@ -39,7 +39,7 @@ public class JDocument {
 	/**
 	 * Property name of {@link #getSourceURI()}.
 	 */
-	public static final String SOURCE_URI = "sourceURI";
+	public static final String SOURCE_URI = "sourceuri";
 
 	/**
 	 * Property name of {@link #getTitle()}.
