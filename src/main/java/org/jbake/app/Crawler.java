@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.model.DocumentStatus;
-import org.jbake.model.DocumentTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,22 +84,19 @@ public class Crawler {
                 if (sourceFile.isFile()) {
                     String sha1 = buildHash(sourceFile);
                     String uri = buildURI(sourceFile);
-                    boolean process = true;
-                    DocumentStatus status = DocumentStatus.NEW;
-                    findStatus:
-                    for (String docType : DocumentTypes.getDocumentTypes()) {
-                        status = findDocumentStatus(docType, uri, sha1);
+                    DocumentStatus status;
+                    {
+                        status = findDocumentStatus(uri, sha1);
                         switch (status) {
-                            case UPDATED:
-                                db.deleteContent(docType, uri);
-                                break findStatus;
+	                        case UPDATED:
+	                        	db.deleteContent(uri);
+	                        	//$FALL-THROUGH$
+	                        case NEW:
+	                        	crawlSourceFile(sourceFile, sha1, uri);
+                                break;
                             case IDENTICAL:
-                                process = false;
-                                break findStatus;
+                                break;
                         }
-                    }
-                    if (process) { // new or updated
-                        crawlSourceFile(sourceFile, sha1, uri);
                     }
 
                     if (status != DocumentStatus.IDENTICAL) {
@@ -195,11 +191,11 @@ public class Crawler {
         return db.getTags();
     }
 
-    private DocumentStatus findDocumentStatus(String docType, String uri, String sha1) {
-        List<ODocument> match = db.getDocumentStatus(docType, uri);
+    private DocumentStatus findDocumentStatus(String uri, String sha1) {
+        List<ODocument> match = db.getDocumentStatus(uri);
         if (!match.isEmpty()) {
             ODocument entries = match.get(0);
-            String oldHash = entries.field("sha1");
+            String oldHash = entries.field(JDocument.SHA1);
             if (!(oldHash.equals(sha1))) {
                 return DocumentStatus.UPDATED;
             } else {
