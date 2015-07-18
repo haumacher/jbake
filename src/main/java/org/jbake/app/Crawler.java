@@ -167,7 +167,7 @@ public class Crawler {
     }
 
 	private void save(String documentType, JDocument fileContents) {
-		ODocument doc = new ODocument(documentType);
+		ODocument doc = new ODocument(ContentStore.DOCUMENT_CLASS);
 		fileContents.update(doc);
 		doc.save();
 	}

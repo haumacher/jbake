@@ -23,6 +23,11 @@
  */
 package org.jbake.app;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,18 +38,19 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.jbake.model.DocumentTypes;
-
 /**
  *
  * @author jdlee
  */
 public class ContentStore {
+	
+    private static final String SIGNATURES_CLASS = "Signatures";
+
+    /**
+     * The node class to store all kinds of documents in.
+     */
+	public static final String DOCUMENT_CLASS = "Document";
+
     private ODatabaseDocumentTx db;
 
     public ContentStore(final String type, String name) {
@@ -62,14 +68,12 @@ public class ContentStore {
 
     public final void updateSchema() {
         OSchema schema = db.getMetadata().getSchema();
-        for (String docType : DocumentTypes.getDocumentTypes()) {
-            if (schema.getClass(docType) == null) {
-                createDocType(schema, docType);
-            }
+        if (schema.getClass(DOCUMENT_CLASS) == null) {
+        	createDocumentClass(schema);
         }
-        if (schema.getClass("Signatures") == null) {
+        if (schema.getClass(SIGNATURES_CLASS) == null) {
             // create the sha1 signatures class
-            OClass signatures = schema.createClass("Signatures");
+            OClass signatures = schema.createClass(SIGNATURES_CLASS);
             signatures.createProperty("key", OType.STRING).setNotNull(true);
             signatures.createProperty("sha1", OType.STRING).setNotNull(true);
         }
@@ -83,12 +87,12 @@ public class ContentStore {
         db.drop();
     }
 
-    public long countClass(String iClassName) {
-        return db.countClass(iClassName);
+    public long countClass(String docType) {
+    	return query("select count(1) from " + DOCUMENT_CLASS + " where type=?", docType).get(0).field("count");
     }
 
     public List<ODocument> getDocumentStatus(String docType, String uri) {
-        return query("select sha1,rendered from " + docType + " where sourceuri=?", uri);
+        return query("select sha1,rendered from " + DOCUMENT_CLASS + " where type=? and sourceuri=?", docType, uri);
 
     }
 
@@ -97,7 +101,7 @@ public class ContentStore {
     }
 
     public List<ODocument> getPublishedPostsByTag(String tag) {
-        return query("select * from post where status='published' where ? in tags order by date desc", tag);
+        return query("select * from " + DOCUMENT_CLASS + " where type='post' and status='published' and ? in tags order by date desc", tag);
     }
 
     public List<ODocument> getPublishedPages() {
@@ -105,15 +109,15 @@ public class ContentStore {
     }
 
     public List<ODocument> getPublishedContent(String docType) {
-        return query("select * from " + docType + " where status='published' order by date desc");
+        return query("select * from " + DOCUMENT_CLASS + " where type=? and status='published' order by date desc", docType);
     }
 
     public List<ODocument> getAllContent(String docType) {
-        return query("select * from " + docType + " order by date desc");
+        return query("select * from " + DOCUMENT_CLASS + " where type=? order by date desc", docType);
     }
 
     public List<ODocument> getAllTagsFromPublishedPosts() {
-        return query("select tags from post where status='published'");
+        return query("select tags from " + DOCUMENT_CLASS + " where type='post' and status='published'");
     }
 
     public List<ODocument> getSignaturesForTemplates() {
@@ -121,11 +125,11 @@ public class ContentStore {
     }
 
     public List<ODocument> getUnrenderedContent(String docType) {
-        return query("select * from " + docType + " where rendered=false");
+        return query("select * from " + DOCUMENT_CLASS + " where type=? and rendered=false", docType);
     }
 
     public void deleteContent(String docType, String uri) {
-        executeCommand("delete from " + docType + " where sourceuri=?", uri);
+        executeCommand("delete from " + DOCUMENT_CLASS + " where type=? and sourceuri=?", docType, uri);
     }
 
     public void markConentAsRendered(String docType) {
@@ -137,7 +141,7 @@ public class ContentStore {
     }
 
     public void deleteAllByDocType(String docType) {
-        executeCommand("delete from " + docType);
+        executeCommand("delete from " + DOCUMENT_CLASS + " where type=?", docType);
     }
 
     public void insertSignature(String currentTemplatesSignature) {
@@ -166,12 +170,13 @@ public class ContentStore {
 	    return result;
 	}
 
-    private static void createDocType(final OSchema schema, final String doctype) {
-        OClass page = schema.createClass(doctype);
-        page.createProperty("sha1", OType.STRING).setNotNull(true);
-        page.createProperty("sourceuri", OType.STRING).setNotNull(true);
-        page.createProperty("rendered", OType.BOOLEAN).setNotNull(true);
-        page.createProperty("cached", OType.BOOLEAN).setNotNull(true);
+    private static void createDocumentClass(final OSchema schema) {
+        OClass page = schema.createClass(DOCUMENT_CLASS);
+        page.createProperty(JDocument.TYPE, OType.STRING).setNotNull(true);
+        page.createProperty(JDocument.SHA1, OType.STRING).setNotNull(true);
+        page.createProperty(JDocument.SOURCE_URI, OType.STRING).setNotNull(true);
+        page.createProperty(JDocument.RENDERED, OType.BOOLEAN).setNotNull(true);
+        page.createProperty(JDocument.CACHED, OType.BOOLEAN).setNotNull(true);
 
         // commented out because for some reason index seems to be written
         // after the database is closed to this triggers an exception
