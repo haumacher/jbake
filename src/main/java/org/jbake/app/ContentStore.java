@@ -91,8 +91,8 @@ public class ContentStore {
     	return query("select count(1) from " + DOCUMENT_CLASS + " where type=?", docType).get(0).field("count");
     }
 
-    public List<ODocument> getDocumentStatus(String docType, String uri) {
-        return query("select sha1,rendered from " + DOCUMENT_CLASS + " where type=? and sourceuri=?", docType, uri);
+    public List<ODocument> getDocumentStatus(String uri) {
+        return query("select sha1,rendered from " + DOCUMENT_CLASS + " where sourceuri=?", uri);
 
     }
 
@@ -128,8 +128,8 @@ public class ContentStore {
         return query("select * from " + DOCUMENT_CLASS + " where type=? and rendered=false", docType);
     }
 
-    public void deleteContent(String docType, String uri) {
-        executeCommand("delete from " + DOCUMENT_CLASS + " where type=? and sourceuri=?", docType, uri);
+    public void deleteContent(String uri) {
+        executeCommand("delete from " + DOCUMENT_CLASS + " where sourceuri=?", uri);
     }
 
     public void markConentAsRendered(String docType) {
