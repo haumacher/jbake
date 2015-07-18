@@ -69,7 +69,7 @@ public class GroovyRendererTest {
     public void renderPost() throws Exception {
     	// setup
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         String filename = "second-post.html";
@@ -96,7 +96,7 @@ public class GroovyRendererTest {
     public void renderPage() throws Exception {
     	// setup
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         String filename = "about.html";
@@ -121,7 +121,7 @@ public class GroovyRendererTest {
     public void renderIndex() throws Exception {
         //setup
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         //exec
         renderer.renderIndex("index.html");
@@ -140,7 +140,7 @@ public class GroovyRendererTest {
     @Test
     public void renderFeed() throws Exception {
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderFeed("feed.xml");
         File outputFile = new File(destinationFolder, "feed.xml");
@@ -157,7 +157,7 @@ public class GroovyRendererTest {
     @Test
     public void renderArchive() throws Exception {
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderArchive("archive.html");
         File outputFile = new File(destinationFolder, "archive.html");
@@ -173,7 +173,7 @@ public class GroovyRendererTest {
     @Test
     public void renderTags() throws Exception {
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderTags("tags");
         
@@ -192,7 +192,7 @@ public class GroovyRendererTest {
     	DBUtil.updateSchema(db);
     	
     	Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + "content"));
+        crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderSitemap("sitemap.xml");
         File outputFile = new File(destinationFolder, "sitemap.xml");

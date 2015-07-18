@@ -253,7 +253,7 @@ public class Oven {
 
 	public void crawl() {
 		Crawler crawler = getCrawler();
-		crawler.crawl(contentsPath);                
+		crawler.crawl();                
 		LOGGER.info("Content detected:");
 		for (String docType : DocumentTypes.getDocumentTypes()) {
 			int count = crawler.getDocumentCount(docType);

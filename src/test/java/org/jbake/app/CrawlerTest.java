@@ -1,15 +1,14 @@
 package org.jbake.app;
 
 
+import static org.assertj.core.api.Assertions.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -19,7 +18,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class CrawlerTest {
     private CompositeConfiguration config;
@@ -48,7 +47,7 @@ public class CrawlerTest {
 	@Test
 	public void crawl() throws ConfigurationException {
         Crawler crawler = new Crawler(db, sourceFolder, config);
-        crawler.crawl(new File(sourceFolder.getPath() + File.separator + config.getString(Keys.CONTENT_FOLDER)));
+        crawler.crawl();
 
         Assert.assertEquals(2, crawler.getDocumentCount("post"));
         Assert.assertEquals(3, crawler.getDocumentCount("page"));

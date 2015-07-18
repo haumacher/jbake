@@ -1,7 +1,5 @@
 package org.jbake.app;
 
-import static java.io.File.*;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.Date;
@@ -27,6 +25,7 @@ public class Crawler {
     private CompositeConfiguration config;
     private Parser parser;
     private final ContentStore db;
+    private File contentDir;
     private String contentPath;
 
     /**
@@ -35,16 +34,25 @@ public class Crawler {
     public Crawler(ContentStore db, File source, CompositeConfiguration config) {
         this.db = db;
         this.config = config;
-        this.contentPath = source.getPath() + separator + config.getString(ConfigUtil.Keys.CONTENT_FOLDER);
+        String contentFolder = config.getString(ConfigUtil.Keys.CONTENT_FOLDER);
+        this.contentDir = new File(source, contentFolder);
+		this.contentPath = contentDir.getPath();
         this.parser = new Parser(config, contentPath);
     }
 
+    /**
+     * Recursively crawls all files stating from the configured content folder.
+     */
+    public void crawl() {
+    	crawl(contentDir);
+    }
+    
     /**
      * Crawl all files and folders looking for content.
      *
      * @param path Folder to start from
      */
-    public void crawl(File path) {
+    private void crawl(File path) {
         File[] contents = path.listFiles(FileUtil.getFileFilter());
         if (contents != null) {
             Arrays.sort(contents);
