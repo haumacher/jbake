@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.model.DocumentTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * All the baking happens in the Oven!
@@ -168,7 +168,7 @@ public class Oven {
                 for (String docType : DocumentTypes.getDocumentTypes()) {
                         for (ODocument document: db.getUnrenderedContent(docType)) {
                                 try {
-                                        renderer.render(DBUtil.documentToModel(document));
+                                        renderer.render(new JDocument(config, DBUtil.documentToModel(document)));
                                         renderedCount++;
                                 } catch (Exception e) {
                                         errors.add(e);

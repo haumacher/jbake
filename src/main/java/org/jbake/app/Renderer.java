@@ -1,12 +1,5 @@
 package org.jbake.app;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.jbake.app.ConfigUtil.Keys;
-import org.jbake.template.DelegatingTemplateEngine;
-import org.jbake.template.RenderingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,6 +10,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.jbake.app.ConfigUtil.Keys;
+import org.jbake.template.DelegatingTemplateEngine;
+import org.jbake.template.RenderingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Render output to a file.
@@ -59,9 +59,9 @@ public class Renderer {
      * @return The rendered/updated {@link File}.
      * @throws Exception
      */
-    public File render(Map<String, Object> content) throws Exception {
+    public File render(JDocument content) throws Exception {
     	String docType = docType(content);
-        String outputFilename = destination.getPath() + File.separatorChar + (String) content.get("uri");
+        String outputFilename = destination.getPath() + File.separatorChar + content.getURI();
         outputFilename = outputFilename.substring(0, outputFilename.lastIndexOf("."));
 
         // delete existing versions if they exist in case status has changed either way
@@ -75,7 +75,7 @@ public class Renderer {
             publishedFile.delete();
         }
 
-        if (content.get("status").equals("draft")) {
+        if (content.getStatus().equals("draft")) {
             outputFilename = outputFilename + config.getString(Keys.DRAFT_SUFFIX);
         }
 
@@ -98,9 +98,9 @@ public class Renderer {
         return outputFile;
     }
 
-	public void renderDocument(Map<String, Object> content, Writer out, boolean wikiMode) throws RenderingException {
+	public void renderDocument(JDocument content, Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
-		model.put("content", content);
+		model.put("content", content.asMap());
 		model.put("renderer", renderingEngine);
 		if (wikiMode) {
 			setWikiMode(model);
@@ -108,9 +108,8 @@ public class Renderer {
 		renderingEngine.renderDocument(model, findTemplateName(docType(content)), out);
 	}
 
-	private String docType(Map<String, Object> content) {
-		String docType = (String) content.get("type");
-		return docType;
+	private String docType(JDocument content) {
+		return content.getType();
 	}
 
     private Writer createWriter(File file) throws IOException {

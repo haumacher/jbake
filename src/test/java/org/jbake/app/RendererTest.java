@@ -1,12 +1,11 @@
 package org.jbake.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Map;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -65,8 +64,8 @@ public class RendererTest {
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
 
         File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + "blog" + File.separator + "2013" + File.separator + "second-post.html");
-        Map<String, Object> content = parser.processFile(sampleFile);
-        content.put("uri", "/second-post.html");
+        JDocument content = parser.processFile(sampleFile);
+        content.setURI("/second-post.html");
         renderer.render(content);
         File outputFile = new File(destinationFolder, "second-post.html");
         Assert.assertTrue(outputFile.exists());
@@ -93,8 +92,8 @@ public class RendererTest {
         String filename = "about.html";
 
         File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + filename);
-        Map<String, Object> content = parser.processFile(sampleFile);
-        content.put("uri", "/" + filename);
+        JDocument content = parser.processFile(sampleFile);
+        content.setURI("/" + filename);
         renderer.render(content);
         File outputFile = new File(destinationFolder, filename);
         Assert.assertTrue(outputFile.exists());
@@ -209,8 +208,8 @@ public class RendererTest {
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
 
         File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + "allcontent.html");
-        Map<String, Object> content = parser.processFile(sampleFile);
-        content.put("uri", "/allcontent.html");
+        JDocument content = parser.processFile(sampleFile);
+        content.setURI("/allcontent.html");
         renderer.render(content);
         File outputFile = new File(destinationFolder, "allcontent.html");
         Assert.assertTrue(outputFile.exists());

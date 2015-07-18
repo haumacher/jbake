@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -15,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.util.ajax.JSON;
+import org.jbake.app.JDocument;
 import org.jbake.app.Oven;
 
 public class UpdateServlet extends HttpServlet {
@@ -65,7 +65,7 @@ public class UpdateServlet extends HttpServlet {
 			backup = null;
 		}
 		
-		Map<String, Object> document;
+		JDocument document;
 		try {
 			FileOutputStream out = new FileOutputStream(sourceFile);
 			try {

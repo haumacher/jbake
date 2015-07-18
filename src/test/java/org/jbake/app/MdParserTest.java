@@ -3,10 +3,8 @@ package org.jbake.app;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.Map;
 
 import org.apache.commons.configuration.CompositeConfiguration;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -180,17 +178,17 @@ public class MdParserTest {
     @Test
     public void parseValidMarkdownFileBasic() throws Exception {
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(validMdFileBasic);
+        JDocument map = parser.processFile(validMdFileBasic);
         Assert.assertNotNull(map);
-        Assert.assertEquals("draft", map.get("status"));
-        Assert.assertEquals("post", map.get("type"));
-        Assert.assertEquals("<h1>This is a test</h1>", map.get("body"));
+        Assert.assertEquals("draft", map.getStatus());
+        Assert.assertEquals("post", map.getType());
+        Assert.assertEquals("<h1>This is a test</h1>", map.getBody());
     }
 
     @Test
     public void parseInvalidMarkdownFileBasic() {
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(invalidMdFileBasic);
+        JDocument map = parser.processFile(invalidMdFileBasic);
         Assert.assertNull(map);
     }
 
@@ -201,17 +199,17 @@ public class MdParserTest {
 
         // Test with HARDWRAPS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileHardWraps);
+        JDocument map = parser.processFile(mdFileHardWraps);
         Assert.assertNotNull(map);
         Assert.assertEquals("<p>First line<br/>Second line</p>", map
-                .get("body"));
+                .getBody());
 
         // Test without HARDWRAPS
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileHardWraps);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>First line Second line</p>", map.get("body"));
+        Assert.assertEquals("<p>First line Second line</p>", map.getBody());
     }
 
     @Test
@@ -221,11 +219,11 @@ public class MdParserTest {
 
         // Test with ABBREVIATIONS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileAbbreviations);
+        JDocument map = parser.processFile(mdFileAbbreviations);
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<p><abbr title=\"Hyper Text Markup Language\">HTML</abbr></p>",
-                map.get("body"));
+                map.getBody());
 
         // Test without ABBREVIATIONS
         config.clearProperty(extensions);
@@ -233,7 +231,7 @@ public class MdParserTest {
         map = parser.processFile(mdFileAbbreviations);
         Assert.assertNotNull(map);
         Assert.assertEquals("<p>*[HTML]: Hyper Text Markup Language HTML</p>",
-                map.get("body"));
+                map.getBody());
     }
 
     @Test
@@ -243,18 +241,18 @@ public class MdParserTest {
 
         // Test with AUTOLINKS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileAutolinks);
+        JDocument map = parser.processFile(mdFileAutolinks);
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<p><a href=\"http://github.com\">http://github.com</a></p>",
-                map.get("body"));
+                map.getBody());
 
         // Test without AUTOLINKS
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileAutolinks);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>http://github.com</p>", map.get("body"));
+        Assert.assertEquals("<p>http://github.com</p>", map.getBody());
     }
 
     @Test
@@ -264,18 +262,18 @@ public class MdParserTest {
 
         // Test with DEFINITIONS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileDefinitions);
+        JDocument map = parser.processFile(mdFileDefinitions);
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<dl><dt>Apple</dt><dd>Pomaceous fruit</dd>\n</dl>", map
-                        .get("body"));
+                        .getBody());
 
         // Test without DEFNITIONS
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileDefinitions);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>Apple : Pomaceous fruit</p>", map.get("body"));
+        Assert.assertEquals("<p>Apple : Pomaceous fruit</p>", map.getBody());
     }
 
     @Test
@@ -285,11 +283,11 @@ public class MdParserTest {
 
         // Test with FENCED_CODE_BLOCKS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileFencedCodeBlocks);
+        JDocument map = parser.processFile(mdFileFencedCodeBlocks);
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<pre><code>function test() {\n  console.log(&quot;!&quot;);\n}\n</code></pre>",
-                map.get("body"));
+                map.getBody());
 
         // Test without FENCED_CODE_BLOCKS
         config.clearProperty(extensions);
@@ -298,7 +296,7 @@ public class MdParserTest {
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<p><code>\nfunction test() {\n  console.log(&quot;!&quot;);\n}\n</code></p>",
-                map.get("body"));
+                map.getBody());
     }
 
     @Test
@@ -308,9 +306,9 @@ public class MdParserTest {
 
         // Test with QUOTES
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileQuotes);
+        JDocument map = parser.processFile(mdFileQuotes);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>&ldquo;quotes&rdquo;</p>", map.get("body"));
+        Assert.assertEquals("<p>&ldquo;quotes&rdquo;</p>", map.getBody());
 
         // Test without QUOTES
         config.clearProperty(extensions);
@@ -318,7 +316,7 @@ public class MdParserTest {
         map = parser.processFile(mdFileQuotes);
         Assert.assertNotNull(map);
         // TODO: Shouldn't these be &quot; (report/fix upstream?)
-        Assert.assertEquals("<p>\"quotes\"</p>", map.get("body"));
+        Assert.assertEquals("<p>\"quotes\"</p>", map.getBody());
     }
 
     @Test
@@ -328,16 +326,16 @@ public class MdParserTest {
 
         // Test with SMARTS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileSmarts);
+        JDocument map = parser.processFile(mdFileSmarts);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>&hellip;</p>", map.get("body"));
+        Assert.assertEquals("<p>&hellip;</p>", map.getBody());
 
         // Test without SMARTS
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileSmarts);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>...</p>", map.get("body"));
+        Assert.assertEquals("<p>...</p>", map.getBody());
     }
 
     @Test
@@ -347,9 +345,9 @@ public class MdParserTest {
 
         // Test with SMARTYPANTS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileSmartypants);
+        JDocument map = parser.processFile(mdFileSmartypants);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>&ldquo;&hellip;&rdquo;</p>", map.get("body"));
+        Assert.assertEquals("<p>&ldquo;&hellip;&rdquo;</p>", map.getBody());
 
         // Test without SMARTYPANTS
         config.clearProperty(extensions);
@@ -357,7 +355,7 @@ public class MdParserTest {
         map = parser.processFile(mdFileSmartypants);
         Assert.assertNotNull(map);
         // TODO: Shouldn't these be &quot; (report/fix upstream?)
-        Assert.assertEquals("<p>\"...\"</p>", map.get("body"));
+        Assert.assertEquals("<p>\"...\"</p>", map.getBody());
     }
 
     @Test
@@ -367,16 +365,16 @@ public class MdParserTest {
 
         // Test with SUPPRESS_ALL_HTML
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileSuppressAllHTML);
+        JDocument map = parser.processFile(mdFileSuppressAllHTML);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>!!</p>", map.get("body"));
+        Assert.assertEquals("<p>!!</p>", map.getBody());
 
         // Test without SUPPRESS_ALL_HTML
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileSuppressAllHTML);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p><div>!</div><em>!</em></p>", map.get("body"));
+        Assert.assertEquals("<p><div>!</div><em>!</em></p>", map.getBody());
     }
 
     @Test
@@ -386,16 +384,16 @@ public class MdParserTest {
 
         // Test with SUPPRESS_HTML_BLOCKS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileSuppressHTMLBlocks);
+        JDocument map = parser.processFile(mdFileSuppressHTMLBlocks);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p><em>!</em></p>", map.get("body"));
+        Assert.assertEquals("<p><em>!</em></p>", map.getBody());
 
         // Test without SUPPRESS_HTML_BLOCKS
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileSuppressHTMLBlocks);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<div>!</div><p><em>!</em></p>", map.get("body"));
+        Assert.assertEquals("<div>!</div><p><em>!</em></p>", map.getBody());
     }
 
     @Test
@@ -405,16 +403,16 @@ public class MdParserTest {
 
         // Test with SUPPRESS_INLINE_HTML
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileSuppressInlineHTML);
+        JDocument map = parser.processFile(mdFileSuppressInlineHTML);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<div>!</div><p>!</p>", map.get("body"));
+        Assert.assertEquals("<div>!</div><p>!</p>", map.getBody());
 
         // Test without SUPPRESS_INLINE_HTML
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileSuppressInlineHTML);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<div>!</div><p><em>!</em></p>", map.get("body"));
+        Assert.assertEquals("<div>!</div><p><em>!</em></p>", map.getBody());
     }
 
     @Test
@@ -424,11 +422,11 @@ public class MdParserTest {
 
         // Test with TABLES
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileTables);
+        JDocument map = parser.processFile(mdFileTables);
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<table>\n  <thead>\n    <tr>\n      <th>First Header</th>\n      <th>Second Header</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Content Cell</td>\n      <td>Content Cell</td>\n    </tr>\n    <tr>\n      <td>Content Cell</td>\n      <td>Content Cell</td>\n    </tr>\n  </tbody>\n</table>",
-                map.get("body"));
+                map.getBody());
 
         // Test without TABLES
         config.clearProperty(extensions);
@@ -437,7 +435,7 @@ public class MdParserTest {
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<p>First Header|Second Header -------------|------------- Content Cell|Content Cell Content Cell|Content Cell</p>",
-                map.get("body"));
+                map.getBody());
     }
 
     @Test
@@ -447,18 +445,18 @@ public class MdParserTest {
 
         // Test with WIKILINKS
         Parser parser = new Parser(config, configFile.getPath());
-        Map<String, Object> map = parser.processFile(mdFileWikilinks);
+        JDocument map = parser.processFile(mdFileWikilinks);
         Assert.assertNotNull(map);
         Assert.assertEquals(
                 "<p><a href=\"./Wiki-style-links.html\">Wiki-style links</a></p>",
-                map.get("body"));
+                map.getBody());
 
         // Test without WIKILINKS
         config.clearProperty(extensions);
         parser = new Parser(config, configFile.getPath());
         map = parser.processFile(mdFileWikilinks);
         Assert.assertNotNull(map);
-        Assert.assertEquals("<p>[[Wiki-style links]]</p>", map.get("body"));
+        Assert.assertEquals("<p>[[Wiki-style links]]</p>", map.getBody());
     }
 
 }

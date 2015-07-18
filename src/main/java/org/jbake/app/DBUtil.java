@@ -49,13 +49,15 @@ public class DBUtil {
      */
     @SuppressWarnings("unchecked")
     public static String[] toStringArray(Object entry) {
-    	if (entry instanceof String[]) {
+    	if(entry==null) {
+    		return new String[0];
+    	} else if (entry instanceof String[]) {
             return (String[]) entry;
         } else if (entry instanceof OTrackedList) {
             OTrackedList<String> list = (OTrackedList<String>) entry;
             return list.toArray(new String[list.size()]);
         }
-    	return new String[0];
+        throw new IllegalArgumentException("Unable to convert object to String[]");
     }
 
 }
