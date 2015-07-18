@@ -2,7 +2,6 @@ package org.jbake.app;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,13 +38,17 @@ public class Oven {
 	private File assetsPath;
 	private boolean isClearCache;
 	private List<Throwable> errors = new LinkedList<Throwable>();
-	private int renderedCount = 0;
 
 	private ContentStore _db;
 
 	private volatile Renderer _renderer;
 
 	private Crawler _crawler;
+	
+	/**
+	 * Whether to update output incrementally.
+	 */
+	private boolean _incremental = false;
 
     /**
      * Delegate c'tor to prevent API break for the moment.
@@ -154,28 +157,49 @@ public class Oven {
 	 * @throws JBakeException
 	 */
 	public void bake() {
+		try {
+            LOGGER.info("Baking has started.");
+            
+			final long start = System.currentTimeMillis();
+            int renderedCount = bakeIncremental();
+            long end = System.currentTimeMillis();
+			
+            LOGGER.info("Baking finished, baked {} items in {}ms", renderedCount, end - start);
+		} finally {
+			close();
+		}
+	}
+	
+	/**
+	 * Only update changed contents, at least, if called the second time.
+	 * 
+	 * @see #reset()
+	 */
+	public int bakeIncremental() {
 			final ContentStore db = getDB();
-            try {
-                final long start = new Date().getTime();
-                LOGGER.info("Baking has started...");
+			Renderer renderer = getRenderer();
+			int renderedCount = 0;
+			{
                 clearCacheIfNeeded(db);
 
                 // process source content
                 crawl();
                 
-                Renderer renderer = getRenderer();
-
                 for (String docType : DocumentTypes.getDocumentTypes()) {
                         for (ODocument document: db.getUnrenderedContent(docType)) {
                                 try {
-                                        renderer.render(new JDocument(config, DBUtil.documentToModel(document)));
+                                        JDocument content = new JDocument(config, DBUtil.documentToModel(document));
+										renderer.render(content);
                                         renderedCount++;
                                 } catch (Exception e) {
                                         errors.add(e);
                                 }
                         }
+                        db.markConentAsRendered(docType);
                 }
+            }
 
+            if (!_incremental || renderedCount > 0) {
                 // write index file
                 if (config.getBoolean(Keys.RENDER_INDEX)) {
                         try {
@@ -220,27 +244,40 @@ public class Oven {
                                 errors.add(e);
                         }
                 }
+            }
 
-                // mark docs as rendered
-                for (String docType : DocumentTypes.getDocumentTypes()) {
-                        db.markConentAsRendered(docType);
-                }
+            {
                 // copy assets
                 Asset asset = new Asset(source, destination, config);
                 asset.copy(assetsPath);
                 errors.addAll(asset.getErrors());
 
-                LOGGER.info("Baking finished!");
-                long end = new Date().getTime();
-                LOGGER.info("Baked {} items in {}ms", renderedCount, end - start);
                 if (errors.size() > 0) {
                         LOGGER.error("Failed to bake {} item(s)!", errors.size());
                 }
-        } finally {
-                db.close();
-                Orient.instance().shutdown();
-        }
+            }
+            
+            _incremental = true;
+            
+            return renderedCount;
     }
+	
+	/**
+	 * Closes the {@link Oven} and releases resources.
+	 */
+	public void close() {
+        getDB().close();
+        Orient.instance().shutdown();
+	}
+	
+	/**
+	 * Request a complete (non-incremental) update, even during {@link #bakeIncremental()}.
+	 * 
+	 * @see #bakeIncremental()
+	 */
+	public void reset() {
+		this._incremental = false;
+	}
 
 	public ContentStore getDB() {
 		if (_db == null) {
@@ -254,6 +291,11 @@ public class Oven {
 	public void crawl() {
 		Crawler crawler = getCrawler();
 		crawler.crawl();                
+		
+		if (_incremental) {
+			return;
+		}
+		
 		LOGGER.info("Content detected:");
 		for (String docType : DocumentTypes.getDocumentTypes()) {
 			int count = crawler.getDocumentCount(docType);
