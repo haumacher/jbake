@@ -1,32 +1,29 @@
 package org.jbake.parser;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.asciidoctor.Asciidoctor;
-import org.asciidoctor.Attributes;
-import org.asciidoctor.AttributesBuilder;
-import org.asciidoctor.ast.DocumentHeader;
-import org.asciidoctor.Options;
-import org.jbake.app.ConfigUtil.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.apache.commons.lang.BooleanUtils.*;
+import static org.apache.commons.lang.math.NumberUtils.*;
+import static org.asciidoctor.AttributesBuilder.*;
+import static org.asciidoctor.OptionsBuilder.*;
+import static org.asciidoctor.SafeMode.*;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static org.apache.commons.lang.BooleanUtils.toBooleanObject;
-import static org.apache.commons.lang.math.NumberUtils.isNumber;
-import static org.apache.commons.lang.math.NumberUtils.toInt;
-import static org.asciidoctor.AttributesBuilder.attributes;
-import static org.asciidoctor.OptionsBuilder.options;
-import static org.asciidoctor.SafeMode.UNSAFE;
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.asciidoctor.Asciidoctor;
+import org.asciidoctor.AttributesBuilder;
+import org.asciidoctor.Options;
+import org.asciidoctor.ast.DocumentHeader;
+import org.jbake.app.ConfigUtil.Keys;
+import org.jbake.app.JDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Renders documents in the asciidoc format using the Asciidoctor engine.
@@ -72,9 +69,9 @@ public class AsciidoctorEngine extends MarkupEngine {
     public void processHeader(final ParserContext context) {
         final Asciidoctor asciidoctor = getEngine();
         DocumentHeader header = asciidoctor.readDocumentHeader(context.getFile());
-        Map<String, Object> contents = context.getContents();
+        JDocument contents = context.getContents();
         if (header.getDocumentTitle() != null) {
-        	contents.put("title", header.getDocumentTitle().getCombined());
+        	contents.setTitle(header.getDocumentTitle().getCombined());
         }
         Map<String, Object> attributes = header.getAttributes();
         for (String key : attributes.keySet()) {
@@ -82,7 +79,7 @@ public class AsciidoctorEngine extends MarkupEngine {
                 Object val = attributes.get(key);
                 if (val!=null) {
                     String pKey = key.substring(6);
-                    contents.put(pKey, val);
+                    contents.genericSet(pKey, val);
                 }
             }
             if (key.equals("revdate")) {
@@ -92,7 +89,7 @@ public class AsciidoctorEngine extends MarkupEngine {
                     Date date = null;
                     try {
                         date = df.parse((String)attributes.get(key));
-                        contents.put("date", date);
+                        contents.setDate(date);
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
@@ -100,10 +97,10 @@ public class AsciidoctorEngine extends MarkupEngine {
             }
             if (key.equals("jbake-tags")) {
                 if (attributes.get(key) != null && attributes.get(key) instanceof String) {
-                    contents.put("tags", ((String) attributes.get(key)).split(","));
+                    contents.setTags(((String) attributes.get(key)).split(","));
                 }
             } else {
-                contents.put(key, attributes.get(key));
+                contents.genericSet(key, attributes.get(key));
             }
         }
     }

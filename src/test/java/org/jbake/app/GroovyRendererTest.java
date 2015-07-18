@@ -1,7 +1,12 @@
 package org.jbake.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Iterator;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -13,13 +18,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Iterator;
-import java.util.Map;
 
 public class GroovyRendererTest {
 
@@ -77,8 +75,8 @@ public class GroovyRendererTest {
         String filename = "second-post.html";
 
         File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + "blog" + File.separator + "2013" + File.separator + filename);
-        Map<String, Object> content = parser.processFile(sampleFile);
-        content.put("uri", "/" + filename);
+        JDocument content = parser.processFile(sampleFile);
+        content.setURI("/" + filename);
         renderer.render(content);
         File outputFile = new File(destinationFolder, filename);
         Assert.assertTrue(outputFile.exists());
@@ -104,8 +102,8 @@ public class GroovyRendererTest {
         String filename = "about.html";
 
         File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + filename);
-        Map<String, Object> content = parser.processFile(sampleFile);
-        content.put("uri", "/" + filename);
+        JDocument content = parser.processFile(sampleFile);
+        content.setURI("/" + filename);
         renderer.render(content);
         File outputFile = new File(destinationFolder, filename);
         Assert.assertTrue(outputFile.exists());

@@ -2,13 +2,13 @@ package org.jbake.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jbake.app.JDocument;
 import org.jbake.app.Oven;
 import org.jbake.parser.Engines;
 
@@ -69,7 +69,7 @@ public class WikiServlet extends HttpServlet {
 		}
 		
 		if (sourceUri != null) {
-			Map<String, Object> document = oven.getCrawler().parse(sourceUri, sourceFile);
+			JDocument document = oven.getCrawler().parse(sourceUri, sourceFile);
 			try {
 				resp.setContentType("text/html");
 				resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");

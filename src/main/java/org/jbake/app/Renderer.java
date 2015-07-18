@@ -59,9 +59,9 @@ public class Renderer {
      * @return The rendered/updated {@link File}.
      * @throws Exception
      */
-    public File render(Map<String, Object> content) throws Exception {
+    public File render(JDocument content) throws Exception {
     	String docType = docType(content);
-        String outputFilename = destination.getPath() + File.separatorChar + (String) content.get("uri");
+        String outputFilename = destination.getPath() + File.separatorChar + content.getURI();
         if (outputFilename.lastIndexOf(".") > 0) {
         	outputFilename = outputFilename.substring(0, outputFilename.lastIndexOf("."));
         }
@@ -77,7 +77,7 @@ public class Renderer {
             publishedFile.delete();
         }
 
-        if (content.get("status").equals("draft")) {
+        if (content.getStatus().equals("draft")) {
             outputFilename = outputFilename + config.getString(Keys.DRAFT_SUFFIX);
         }
 
@@ -100,9 +100,9 @@ public class Renderer {
         return outputFile;
     }
 
-	public void renderDocument(Map<String, Object> content, Writer out, boolean wikiMode) throws RenderingException {
+	public void renderDocument(JDocument content, Writer out, boolean wikiMode) throws RenderingException {
 		Map<String, Object> model = new HashMap<String, Object>();
-		model.put("content", content);
+		model.put("content", content.asMap());
 		model.put("renderer", renderingEngine);
 		if (wikiMode) {
 			setWikiMode(model);
@@ -110,9 +110,8 @@ public class Renderer {
 		renderingEngine.renderDocument(model, findTemplateName(docType(content)), out);
 	}
 
-	private String docType(Map<String, Object> content) {
-		String docType = (String) content.get("type");
-		return docType;
+	private String docType(JDocument content) {
+		return content.getType();
 	}
 
     private Writer createWriter(File file) throws IOException {

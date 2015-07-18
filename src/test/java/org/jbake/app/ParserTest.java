@@ -1,12 +1,10 @@
 package org.jbake.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.junit.Assert;
@@ -116,14 +114,14 @@ public class ParserTest {
 	
 	@Test
 	public void parseValidHTMLFile() {
-		Map<String, Object> map = parser.processFile(validHTMLFile);
+		JDocument map = parser.processFile(validHTMLFile);
 		Assert.assertNotNull(map);
-		Assert.assertEquals("draft", map.get("status"));
-		Assert.assertEquals("post", map.get("type"));
-		Assert.assertEquals("This is a Title = This is a valid Title", map.get("title"));
-		Assert.assertNotNull(map.get("date"));
+		Assert.assertEquals("draft", map.getStatus());
+		Assert.assertEquals("post", map.getType());
+		Assert.assertEquals("This is a Title = This is a valid Title", map.getTitle());
+		Assert.assertNotNull(map.getDate());
 		Calendar cal = Calendar.getInstance();
-		cal.setTime((Date) map.get("date"));
+		cal.setTime(map.getDate());
 		Assert.assertEquals(8, cal.get(Calendar.MONTH));
 		Assert.assertEquals(2, cal.get(Calendar.DAY_OF_MONTH));
 		Assert.assertEquals(2013, cal.get(Calendar.YEAR));
@@ -132,17 +130,17 @@ public class ParserTest {
 	
 	@Test
 	public void parseInvalidHTMLFile() {
-		Map<String, Object> map = parser.processFile(invalidHTMLFile);
+		JDocument map = parser.processFile(invalidHTMLFile);
 		Assert.assertNull(map);
 	}
 	
 	@Test
 	public void parseValidAsciiDocFile() {
-		Map<String, Object> map = parser.processFile(validAsciiDocFile);
+		JDocument map = parser.processFile(validAsciiDocFile);
 		Assert.assertNotNull(map);
-		Assert.assertEquals("draft", map.get("status"));
-		Assert.assertEquals("post", map.get("type"));
-		assertThat(map.get("body").toString())
+		Assert.assertEquals("draft", map.getStatus());
+		Assert.assertEquals("post", map.getType());
+		assertThat(map.getBody().toString())
 			.contains("class=\"paragraph\"")
 			.contains("<p>JBake now supports AsciiDoc.</p>");
 //		Assert.assertEquals("<div id=\"preamble\">\n<div class=\"sectionbody\">\n<div class=\"paragraph\">\n<p>JBake now supports AsciiDoc.</p>\n</div>\n</div>\n</div>", map.get("body"));
@@ -151,18 +149,18 @@ public class ParserTest {
 	@Test
 	public void parseInvalidAsciiDocFile() {
 		Parser parser = new Parser(config,rootPath.getPath());
-		Map<String, Object> map = parser.processFile(invalidAsciiDocFile);
+		JDocument map = parser.processFile(invalidAsciiDocFile);
 		Assert.assertNull(map);
 	}
 	
 	@Test
 	public void parseValidAsciiDocFileWithoutHeader() {
-		Map<String, Object> map = parser.processFile(validAsciiDocFileWithoutHeader);
+		JDocument map = parser.processFile(validAsciiDocFileWithoutHeader);
 		Assert.assertNotNull(map);
-		Assert.assertEquals("Hello: AsciiDoc!", map.get("title"));
-		Assert.assertEquals("published", map.get("status"));
-		Assert.assertEquals("page", map.get("type"));
-		assertThat(map.get("body").toString())
+		Assert.assertEquals("Hello: AsciiDoc!", map.getTitle());
+		Assert.assertEquals("published", map.getStatus());
+		Assert.assertEquals("page", map.getType());
+		assertThat(map.getBody())
 			.contains("class=\"paragraph\"")
 			.contains("<p>JBake now supports AsciiDoc.</p>");
 //		Assert.assertEquals("<div id=\"preamble\">\n<div class=\"sectionbody\">\n<div class=\"paragraph\">\n<p>JBake now supports AsciiDoc.</p>\n</div>\n</div>\n</div>", map.get("body"));
@@ -171,17 +169,17 @@ public class ParserTest {
 	@Test
 	public void parseInvalidAsciiDocFileWithoutHeader() {
 		Parser parser = new Parser(config,rootPath.getPath());
-		Map<String, Object> map = parser.processFile(invalidAsciiDocFileWithoutHeader);
+		JDocument map = parser.processFile(invalidAsciiDocFileWithoutHeader);
 		Assert.assertNull(map);
 	}
 	
 	@Test
 	public void parseValidAsciiDocFileWithExampleHeaderInContent() {
-		Map<String, Object> map = parser.processFile(validAsciiDocFileWithHeaderInContent);
+		JDocument map = parser.processFile(validAsciiDocFileWithHeaderInContent);
 		Assert.assertNotNull(map);
-		Assert.assertEquals("published", map.get("status"));
-		Assert.assertEquals("page", map.get("type"));
-		assertThat(map.get("body").toString())
+		Assert.assertEquals("published", map.getStatus());
+		Assert.assertEquals("page", map.getType());
+		assertThat(map.getBody())
 			.contains("class=\"paragraph\"")
 			.contains("<p>JBake now supports AsciiDoc.</p>")
 			.contains("class=\"listingblock\"")

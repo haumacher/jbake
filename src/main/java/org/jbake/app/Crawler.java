@@ -1,14 +1,11 @@
 package org.jbake.app;
 
-import static java.io.File.separator;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import static java.io.File.*;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.configuration.CompositeConfiguration;
@@ -16,6 +13,8 @@ import org.jbake.model.DocumentStatus;
 import org.jbake.model.DocumentTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Crawls a file system looking for content.
@@ -108,33 +107,28 @@ public class Crawler {
     }
 
     private void crawlSourceFile(final File sourceFile, final String sha1, final String uri) {
-        Map<String, Object> fileContents = parse(uri, sourceFile);
+        JDocument fileContents = parse(uri, sourceFile);
         if (fileContents != null) {
-        	fileContents.put("sha1", sha1);
-        	String documentType = (String) fileContents.get("type");
+        	fileContents.setSHA1(sha1);
+        	String documentType = fileContents.getType();
         	save(documentType, fileContents);
         }
     }
 
-	public Map<String, Object> parse(final String uri, final File sourceFile) {
-		Map<String, Object> fileContents = parser.processFile(sourceFile);
+	public JDocument parse(final String uri, final File sourceFile) {
+		JDocument fileContents = parser.processFile(sourceFile);
         if (fileContents != null) {
-        	fileContents.put("rootpath", getPathToRoot(sourceFile));
-            fileContents.put("rendered", false);
-            if (fileContents.get("tags") != null) {
-                // store them as a String[]
-                String[] tags = (String[]) fileContents.get("tags");
-                fileContents.put("tags", tags);
-            }
-            fileContents.put("file", sourceFile.getPath());
+        	fileContents.setRootPath(getPathToRoot(sourceFile));
+            fileContents.setRendered(false);
+            fileContents.setFile(sourceFile.getPath());
             
-            fileContents.put("sourceURI", uri);
-            fileContents.put("uri", uri.substring(0, uri.lastIndexOf(".")) + FileUtil.findExtension(config, fileContents.get("type").toString()));
+            fileContents.setSourceURI(uri);
+            fileContents.setURI(uri.substring(0, uri.lastIndexOf(".")) + FileUtil.findExtension(config, fileContents.getType()));
 
-            if (fileContents.get("status").equals("published-date")) {
-                if (fileContents.get("date") != null && (fileContents.get("date") instanceof Date)) {
-                    if (new Date().after((Date) fileContents.get("date"))) {
-                        fileContents.put("status", "published");
+            if (fileContents.getStatus().equals("published-date")) {
+                if (fileContents.getDate() != null) {
+                    if (new Date().after(fileContents.getDate())) {
+                        fileContents.setStatus("published");
                     }
                 }
             }
@@ -144,11 +138,9 @@ public class Crawler {
 		return fileContents;
     }
 
-	private void save(String documentType, Map<String, Object> fileContents) {
+	private void save(String documentType, JDocument fileContents) {
 		ODocument doc = new ODocument(documentType);
-		doc.fields(fileContents);
-		boolean cached = fileContents.get("cached") != null ? Boolean.valueOf((String)fileContents.get("cached")):true;
-		doc.field("cached", cached);
+		fileContents.update(doc);
 		doc.save();
 	}
 

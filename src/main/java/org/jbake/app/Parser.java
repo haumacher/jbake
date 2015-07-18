@@ -1,27 +1,21 @@
 package org.jbake.app;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.parser.Engines;
 import org.jbake.parser.MarkupEngine;
 import org.jbake.parser.ParserContext;
-import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Parses a File for content.
@@ -48,8 +42,8 @@ public class Parser {
      * @param    file
      * @return The contents of the file
      */
-    public Map<String, Object> processFile(File file) {
-        Map<String,Object> content = new HashMap<String, Object>();
+    public JDocument processFile(File file) {
+        JDocument content = new JDocument(config);
         InputStream is = null;
         List<String> fileContents = null;
         try {
@@ -86,19 +80,19 @@ public class Parser {
         // then read engine specific headers
         engine.processHeader(context);
         
-        if (content.get("date") == null) {
-        	content.put("date", new Date(file.lastModified()));
+        if (content.getDate() == null) {
+        	content.setDate(new Date(file.lastModified()));
         }
         
         if (config.getString(Keys.DEFAULT_STATUS) != null) {
         	// default status has been set
-        	if (content.get("status") == null) {
+        	if (content.getStatus() == null) {
         		// file hasn't got status so use default
-        		content.put("status", config.getString(Keys.DEFAULT_STATUS));
+        		content.setStatus(config.getString(Keys.DEFAULT_STATUS));
         	}
         }
 
-        if (content.get("type")==null||content.get("status")==null) {
+        if (content.getType()==null||content.getStatus()==null) {
             // output error
             LOGGER.warn("Error parsing meta data from header (missing type or status value) for file {}!", file);
             return null;
@@ -115,15 +109,15 @@ public class Parser {
             return null;
         }
 
-        if (content.get("tags") != null) {
-        	String[] tags = (String[]) content.get("tags");
+        if (content.getTags() != null) {
+        	String[] tags = content.getTags();
             for( int i=0; i<tags.length; i++ ) {
                 tags[i]=tags[i].trim();
                 if (config.getBoolean(Keys.TAG_SANITIZE)) {
                 	tags[i]=tags[i].replace(" ", "-");
                 }
             }
-            content.put("tags", tags);
+            content.setTags(tags);
         }
         
         // TODO: post parsing plugins to hook in here?
@@ -182,33 +176,16 @@ public class Parser {
      * Process the header of the file.
      *
      * @param contents Contents of file
-     * @param content
+     * @param content The document to update with header contents.
      */
-    private void processHeader(List<String> contents, final Map<String, Object> content) {
+    private void processHeader(List<String> contents, final JDocument content) {
         for (String line : contents) {
             if (line.equals("~~~~~~")) {
                 break;
             } else {
                 String[] parts = line.split("=",2);
                 if (parts.length == 2) {
-                    if (parts[0].equalsIgnoreCase("date")) {
-                        DateFormat df = new SimpleDateFormat(config.getString(Keys.DATE_FORMAT));
-                        Date date = null;
-                        try {
-                            date = df.parse(parts[1]);
-                            content.put(parts[0], date);
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (parts[0].equalsIgnoreCase("tags")) {
-                        String[] tags = parts[1].split(",");
-                        content.put(parts[0], tags);
-                    } else if (parts[1].startsWith("{") && parts[1].endsWith("}")) {
-                        // Json type
-                        content.put(parts[0], JSONValue.parse(parts[1]));
-                    } else {
-                        content.put(parts[0], parts[1]);
-                    }
+                    content.genericSet(parts[0], parts[1]);
                 }
             }
         }
@@ -218,9 +195,9 @@ public class Parser {
      * Process the body of the file.
      *
      * @param contents Contents of file
-     * @param content
+     * @param content The {@link JDocument} to update with body content.
      */
-    private void processBody(List<String> contents, final Map<String, Object> content) {
+    private void processBody(List<String> contents, final JDocument content) {
         StringBuilder body = new StringBuilder();
         boolean inBody = false;
         for (String line : contents) {
@@ -238,7 +215,7 @@ public class Parser {
             }
         }
         
-        content.put("body", body.toString());
+        content.setBody(body.toString());
     }
 
 }
