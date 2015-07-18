@@ -1,7 +1,6 @@
 package org.jbake.template;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.lang.LocaleUtils;
@@ -11,15 +10,21 @@ import org.jbake.app.DocumentList;
 import org.jbake.model.DocumentTypes;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.thymeleaf.context.IProcessingContext;
 import org.thymeleaf.context.VariablesMap;
+import org.thymeleaf.dialect.AbstractDialect;
 import org.thymeleaf.dialect.IDialect;
+import org.thymeleaf.dialect.IExpressionEnhancingDialect;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 import java.io.File;
 import java.io.Writer;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -72,12 +77,12 @@ public class ThymeleafTemplateEngine extends AbstractTemplateEngine {
         } catch (Exception e) {
             // Sad, but true and not a real problem
         }
+        templateEngine.addDialect(new DocumentsDialect());
     }
 
     @Override
     public void renderDocument(final Map<String, Object> model, final String templateName, final Writer writer) throws RenderingException {
-        String localeString = config.getString(Keys.THYMELEAF_LOCALE);
-        Locale locale = localeString != null ? LocaleUtils.toLocale(localeString) : Locale.getDefault();
+        Locale locale = locale();
         Context context = new Context(locale, wrap(model));
         lock.lock();
         try {
@@ -99,6 +104,11 @@ public class ThymeleafTemplateEngine extends AbstractTemplateEngine {
             lock.unlock();
         }
     }
+
+	Locale locale() {
+		String localeString = config.getString(Keys.THYMELEAF_LOCALE);
+        return localeString != null ? LocaleUtils.toLocale(localeString) : Locale.getDefault();
+	}
 
     private VariablesMap<String, Object> wrap(final Map<String, Object> model) {
         return new JBakeVariablesMap(model);
@@ -167,4 +177,83 @@ public class ThymeleafTemplateEngine extends AbstractTemplateEngine {
         	return DocumentList.wrap(allContent.iterator());
         }
     }
+
+    /**
+     * {@link IExpressionEnhancingDialect} that provides {@link DocumentsUtility} as <code>#documents</code>.
+     */
+    public class DocumentsDialect extends AbstractDialect implements IExpressionEnhancingDialect {
+    	private static final String DOCUMENTS_OBJECT = "documents";
+		private static final String DOCUMENTS_PREFIX = "documents";
+
+    	@Override
+    	public Map<String,Object> getAdditionalExpressionObjects(IProcessingContext processingContext) {
+    		HashMap<String,Object> expressionobjects = new HashMap<String,Object>();
+    		expressionobjects.put(DOCUMENTS_OBJECT, new DocumentsUtility());
+    		return expressionobjects;
+    	}
+
+    	@Override
+    	public String getPrefix() {
+    		return DOCUMENTS_PREFIX;
+    	}
+    	
+    	/**
+    	 * Utility functions for sorting documents.
+    	 */
+    	public class DocumentsUtility {
+    		
+			/**
+			 * Creates a {@link Comparator} for sorting documents according to a
+			 * given specification.
+			 * 
+			 * @param spec
+			 *        A list of document property names separated by
+			 *        <code>'|'</code> according to which the resulting
+			 *        {@link Comparator} sorts documents.
+			 * @return A {@link Comparator} for document objects.
+			 */
+			public Comparator<Map<String,Object>> collator(String spec) {
+				List<String> choicesList = new ArrayList<String>();
+				for (String choice : spec.split("\\|")) {
+					choicesList.add(choice.trim());
+				}
+				final String[] choices = choicesList.toArray(new String[choicesList.size()]);
+				
+    			return new Comparator<Map<String,Object>>() {
+
+    				private final Collator _collator = Collator.getInstance(locale());
+    				
+					@Override
+					public int compare(Map<String, Object> d1, Map<String, Object> d2) {
+						Object key1 = sortKey(d1);
+						Object key2 = sortKey(d2);
+						if (key1 == null) {
+							if (key2 == null) {
+								return 0;
+							} else {
+								return 1;
+							}
+						} else {
+							if (key2 == null) {
+								return -1;
+							} else {
+								return _collator.compare(key1, key2);
+							}
+						}
+					}
+
+					private Object sortKey(Map<String, Object> d1) {
+						for (String key : choices) {
+							Object result = d1.get(key);
+							if (result != null) {
+								return result;
+							}
+						}
+						return null;
+					}
+				};
+    		}
+    	}
+    }
+    
 }
