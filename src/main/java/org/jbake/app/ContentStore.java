@@ -133,7 +133,7 @@ public class ContentStore {
     }
 
     public void markConentAsRendered(String docType) {
-        executeCommand("update " + docType + " set rendered=true where rendered=false and cached=true");
+        executeCommand("update " + DOCUMENT_CLASS + " set rendered=true where type=? and rendered=false and cached=true", docType);
     }
 
     public void updateSignatures(String currentTemplatesSignature) {
