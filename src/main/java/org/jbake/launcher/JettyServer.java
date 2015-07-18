@@ -39,9 +39,6 @@ public class JettyServer {
 	 * @param port
 	 */
 	public static void run(String path, String port, Oven oven) {
-		// Initi database.
-		oven.crawl();
-		
 		watch(oven);
 		
 		Server server = new Server();
@@ -145,6 +142,8 @@ public class JettyServer {
 			@Override
 			public void run() {
 				while (true) {
+					oven.bakeIncremental();
+					
 					if (check(oven.getTemplatesPath())) {
 						LOGGER.info("Templates changed, resetting renderer.");
 						_timestamp = System.currentTimeMillis();
@@ -156,6 +155,8 @@ public class JettyServer {
 						break;
 					}
 				}
+				
+				oven.close();
 			}
 
 			private boolean check(File path) {

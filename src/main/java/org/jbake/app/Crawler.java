@@ -83,34 +83,29 @@ public class Crawler {
             Arrays.sort(contents);
             for (File sourceFile : contents) {
                 if (sourceFile.isFile()) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Processing [").append(sourceFile.getPath()).append("]... ");
                     String sha1 = buildHash(sourceFile);
                     String uri = buildURI(sourceFile);
                     boolean process = true;
                     DocumentStatus status = DocumentStatus.NEW;
+                    findStatus:
                     for (String docType : DocumentTypes.getDocumentTypes()) {
                         status = findDocumentStatus(docType, uri, sha1);
                         switch (status) {
                             case UPDATED:
-                                sb.append(" : modified ");
                                 db.deleteContent(docType, uri);
-                                break;
+                                break findStatus;
                             case IDENTICAL:
-                                sb.append(" : same ");
                                 process = false;
+                                break findStatus;
                         }
-                        if (!process) {
-                            break;
-                        }
-                    }
-                    if (DocumentStatus.NEW == status) {
-                        sb.append(" : new ");
                     }
                     if (process) { // new or updated
                         crawlSourceFile(sourceFile, sha1, uri);
                     }
-                    LOGGER.info(sb.toString());
+
+                    if (status != DocumentStatus.IDENTICAL) {
+                    	LOGGER.info("Processing [" + sourceFile.getPath() + "]: " + status);
+                    }
                 }
                 if (sourceFile.isDirectory()) {
                     crawl(sourceFile);
@@ -205,7 +200,7 @@ public class Crawler {
         if (!match.isEmpty()) {
             ODocument entries = match.get(0);
             String oldHash = entries.field("sha1");
-            if (!(oldHash.equals(sha1)) || Boolean.FALSE.equals(entries.field("rendered"))) {
+            if (!(oldHash.equals(sha1))) {
                 return DocumentStatus.UPDATED;
             } else {
                 return DocumentStatus.IDENTICAL;
