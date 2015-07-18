@@ -46,7 +46,7 @@ public class CrawlerTest {
     }
 	@Test
 	public void crawl() throws ConfigurationException {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
 
         Assert.assertEquals(2, crawler.getDocumentCount("post"));

@@ -68,7 +68,7 @@ public class GroovyRendererTest {
     @Test
     public void renderPost() throws Exception {
     	// setup
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
@@ -95,7 +95,7 @@ public class GroovyRendererTest {
     @Test
     public void renderPage() throws Exception {
     	// setup
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
@@ -120,7 +120,7 @@ public class GroovyRendererTest {
     @Test
     public void renderIndex() throws Exception {
         //setup
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         //exec
@@ -139,7 +139,7 @@ public class GroovyRendererTest {
 
     @Test
     public void renderFeed() throws Exception {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderFeed("feed.xml");
@@ -156,7 +156,7 @@ public class GroovyRendererTest {
 
     @Test
     public void renderArchive() throws Exception {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderArchive("archive.html");
@@ -172,7 +172,7 @@ public class GroovyRendererTest {
 
     @Test
     public void renderTags() throws Exception {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderTags("tags");
@@ -191,7 +191,7 @@ public class GroovyRendererTest {
     	DocumentTypes.addDocumentType("paper");
     	DBUtil.updateSchema(db);
     	
-    	Crawler crawler = new Crawler(db, sourceFolder, config);
+    	Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderSitemap("sitemap.xml");
