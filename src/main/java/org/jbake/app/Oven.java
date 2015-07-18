@@ -265,7 +265,7 @@ public class Oven {
 
 	public Crawler getCrawler() {
 		if (_crawler == null) {
-			_crawler = new Crawler(getDB(), source, config);
+			_crawler = Crawler.createCrawler(getDB(), contentsPath, config);
 		}
 		return _crawler;
 	}

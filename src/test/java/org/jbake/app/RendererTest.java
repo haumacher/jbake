@@ -58,7 +58,7 @@ public class RendererTest {
 
     @Test
     public void renderPost() throws Exception {
-    	Crawler crawler = new Crawler(db, sourceFolder, config);
+    	Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
     	crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
@@ -85,7 +85,7 @@ public class RendererTest {
     @Test
     public void renderPage() throws Exception {
     	// setup
-    	Crawler crawler = new Crawler(db, sourceFolder, config);
+    	Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
     	crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
@@ -110,7 +110,7 @@ public class RendererTest {
     @Test
     public void renderIndex() throws Exception {
         //setup
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         //exec
@@ -129,7 +129,7 @@ public class RendererTest {
 
     @Test
     public void renderFeed() throws Exception {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderFeed("feed.xml");
@@ -146,7 +146,7 @@ public class RendererTest {
 
     @Test
     public void renderArchive() throws Exception {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderArchive("archive.html");
@@ -162,7 +162,7 @@ public class RendererTest {
 
     @Test
     public void renderTags() throws Exception {
-        Crawler crawler = new Crawler(db, sourceFolder, config);
+        Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderTags("tags");
@@ -181,7 +181,7 @@ public class RendererTest {
     	DocumentTypes.addDocumentType("paper");
     	DBUtil.updateSchema(db);
     	
-    	Crawler crawler = new Crawler(db, sourceFolder, config);
+    	Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
         crawler.crawl();
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);
         renderer.renderSitemap("sitemap.xml");
@@ -202,7 +202,7 @@ public class RendererTest {
     	DocumentTypes.addDocumentType("paper");
     	DBUtil.updateSchema(db);
     	
-    	Crawler crawler = new Crawler(db, sourceFolder, config);
+    	Crawler crawler = Crawler.createCrawlerForSource(db, sourceFolder, config);
     	crawler.crawl();
         Parser parser = new Parser(config, sourceFolder.getPath());
         Renderer renderer = new Renderer(db, destinationFolder, templateFolder, config);

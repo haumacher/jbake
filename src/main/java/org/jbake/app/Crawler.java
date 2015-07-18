@@ -22,7 +22,33 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class Crawler {
     private static final Logger LOGGER = LoggerFactory.getLogger(Crawler.class);
 
-    private CompositeConfiguration config;
+    /**
+     * Creates new instance of {@link Crawler}.
+     * 
+     * @param db The {@link ContentStore} to put crawled files to.
+     * @param source The source folder relative to which the content folder is resolved.
+     * @param config The JBake configuration.
+     * @return The newly created {@link Crawler}.
+     */
+    public static Crawler createCrawlerForSource(ContentStore db, File source, CompositeConfiguration config) {
+        String contentFolder = config.getString(ConfigUtil.Keys.CONTENT_FOLDER);
+        File contentDir = new File(source, contentFolder);
+		return createCrawler(db, contentDir, config);
+	}
+
+    /**
+     * Creates new instance of {@link Crawler}.
+     * 
+     * @param db The {@link ContentStore} to put crawled files to.
+     * @param contentDir The directory to start crawling from.
+     * @param config The JBake configuration.
+     * @return The newly created {@link Crawler}.
+     */
+	public static Crawler createCrawler(ContentStore db, File contentDir, CompositeConfiguration config) {
+		return new Crawler(db, contentDir, config);
+	}
+
+	private CompositeConfiguration config;
     private Parser parser;
     private final ContentStore db;
     private File contentDir;
@@ -31,11 +57,10 @@ public class Crawler {
     /**
      * Creates new instance of Crawler.
      */
-    public Crawler(ContentStore db, File source, CompositeConfiguration config) {
+    private Crawler(ContentStore db, File contentDir, CompositeConfiguration config) {
         this.db = db;
         this.config = config;
-        String contentFolder = config.getString(ConfigUtil.Keys.CONTENT_FOLDER);
-        this.contentDir = new File(source, contentFolder);
+        this.contentDir = contentDir;
 		this.contentPath = contentDir.getPath();
         this.parser = new Parser(config, contentPath);
     }
