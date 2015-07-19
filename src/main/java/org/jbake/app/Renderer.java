@@ -299,8 +299,7 @@ public class Renderer {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("renderer", renderingEngine);
 		model.put("tag", tag);
-		Map<String, Object> map = buildSimpleModel("tag");
-		map.put("rootpath", "../");
+		Map<String, Object> map = buildSimpleModel("tag", config.getString(Keys.TAG_PATH) + '/' + tag + config.getString(Keys.OUTPUT_EXTENSION));
 		model.put("content", map);
 		if (wikiMode) {
 			setWikiMode(model);
@@ -315,11 +314,49 @@ public class Renderer {
      * @return
      */
     private Map<String, Object> buildSimpleModel(String type) {
+    	return buildSimpleModel(type, uri(type));
+    }
+
+	private Map<String, Object> buildSimpleModel(String type, String uri) {
     	Map<String, Object> content = new HashMap<String, Object>();
     	content.put("type", type);
-    	content.put("rootpath", "");
+		content.put("uri", uri);
+		content.put("rootpath", rootPath(uri));
     	// add any more keys here that need to have a default value to prevent need to perform null check in templates
     	return content;
+    }
+
+    private String rootPath(String uri) {
+    	StringBuilder result = new StringBuilder();
+    	
+    	int next = uri.length() - 1;
+    	while (true) {
+    		int index = uri.lastIndexOf('/', next);
+    		if (index <= 0) {
+    			break;
+    		}
+    		
+    		result.append("../");
+    		next = index - 1;
+    	}
+		
+		return result.toString();
+	}
+
+	private String uri(String type) {
+    	if (type.equals("masterindex")) {
+    		return config.getString(Keys.INDEX_FILE);
+    	}
+    	if (type.equals("archive")) {
+    		return config.getString(Keys.ARCHIVE_FILE);
+    	}
+    	if (type.equals("feed")) {
+    		return config.getString(Keys.FEED_FILE);
+    	}
+    	if (type.equals("sitemap")) {
+    		return config.getString(Keys.SITEMAP_FILE);
+    	}
+    	return "";
     }
 
     /**
