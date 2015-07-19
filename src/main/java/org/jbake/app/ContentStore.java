@@ -53,8 +53,11 @@ public class ContentStore {
 
     private ODatabaseDocumentTx db;
 
-    public ContentStore(final String type, String name) {
-        db = new ODatabaseDocumentTx(type + ":" + name);
+	private boolean postOnly;
+
+    public ContentStore(final String type, String name, boolean postOnly) {
+        this.postOnly = postOnly;
+		db = new ODatabaseDocumentTx(type + ":" + name);
         boolean exists = db.exists();
         if (!exists) {
             db.create();
@@ -120,6 +123,10 @@ public class ContentStore {
         return query("select tags from " + DOCUMENT_CLASS + " where type='post' and status='published'");
     }
 
+    public List<ODocument> getAllTagsFromPublishedDocuments() {
+    	return query("select tags from " + DOCUMENT_CLASS + " where status='published'");
+    }
+    
     public List<ODocument> getSignaturesForTemplates() {
         return query("select sha1 from Signatures where key='templates'");
     }
@@ -167,7 +174,7 @@ public class ContentStore {
     }
 
     public Set<String> getTags() {
-		List<ODocument> query = getAllTagsFromPublishedPosts(); //query(new OSQLSynchQuery<ODocument>("select tags from post where status='published'"));
+		List<ODocument> query = postOnly ? getAllTagsFromPublishedPosts() : getAllTagsFromPublishedDocuments();
 	    Set<String> result = new HashSet<String>();
 	    for (ODocument document : query) {
 	        String[] tags = DBUtil.toStringArray(document.field("tags"));
