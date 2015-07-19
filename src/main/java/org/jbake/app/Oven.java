@@ -176,6 +176,7 @@ public class Oven {
 	 * @see #reset()
 	 */
 	public int bakeIncremental() {
+			errors.clear();
 			final ContentStore db = getDB();
 			Renderer renderer = getRenderer();
 			int renderedCount = 0;
