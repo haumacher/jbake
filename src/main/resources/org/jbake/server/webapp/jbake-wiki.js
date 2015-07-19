@@ -3,10 +3,12 @@ function jbToggleEdit() {
 	var viewer = $("#custom-body");
 	
 	if (editor.css("display") == "none") {
+		var url = contextPath + "jb/source/" + sourceuri;
+		
 		// Currently in view mode, request source and toggle mode.
 		var xmlRequest = $.ajax({
 			method: "GET",
-			url: contextPath + "jb/source/" + sourceURI,
+			url: url,
 			processData: false
 		});
 		 
@@ -16,7 +18,7 @@ function jbToggleEdit() {
 		});
 		
 		xmlRequest.fail(function(jqXHR, textStatus) {
-			alert("Loading source failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
+			alert("Loading source '" + url + "' failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
 		});
 	} else {
 		// Currently in edit mode, save changes.
@@ -33,7 +35,7 @@ function jbToggleEdit() {
 		});
 		 
 		xmlRequest.done(function(result) {
-			if (putUri == sourceURI) {
+			if (putUri == sourceuri) {
 				viewer.html(result.body);
 				$('#jb-title').text(result.title); 
 				$('.custom-editor').toggleClass('custom-hidden'); 
