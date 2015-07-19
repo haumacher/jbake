@@ -6,6 +6,11 @@ import static org.asciidoctor.AttributesBuilder.*;
 import static org.asciidoctor.OptionsBuilder.*;
 import static org.asciidoctor.SafeMode.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOError;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,6 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.IOUtils;
 import org.asciidoctor.Asciidoctor;
 import org.asciidoctor.AttributesBuilder;
 import org.asciidoctor.Options;
@@ -68,7 +74,7 @@ public class AsciidoctorEngine extends MarkupEngine {
     @Override
     public void processHeader(final ParserContext context) {
         final Asciidoctor asciidoctor = getEngine();
-        DocumentHeader header = asciidoctor.readDocumentHeader(context.getFile());
+        DocumentHeader header = asciidoctor.readDocumentHeader(buffer(context.getFile()));
         JDocument contents = context.getContents();
         if (header.getDocumentTitle() != null) {
         	contents.setTitle(header.getDocumentTitle().getCombined());
@@ -105,7 +111,37 @@ public class AsciidoctorEngine extends MarkupEngine {
         }
     }
 
-    @Override
+    /**
+	 * Workaround for a resource leak in
+	 * {@link Asciidoctor#readDocumentHeader(File)}.
+	 * 
+	 * <p>
+	 * When calling {@link Asciidoctor#readDocumentHeader(File)}, the reading
+	 * stream to the given file is not closed properly. The file keeps being
+	 * locked and can no longer be deleted, until the JVM exits. Therefore, the
+	 * file contents is read in Java passing only the {@link String} contents to
+	 * the unsafe code.
+	 * </p>
+	 */
+	private String buffer(File file) {
+    	try {
+			FileInputStream in = new FileInputStream(file);
+			try {
+				// Note: Potentially wrong encoding, if different from the
+				// platform - but this is the same problem as in the original
+				// code, where the doctor reads the file contents by itself
+				// without knowing the file encoding, which is given in the
+				// global configuration.
+				return IOUtils.toString(new InputStreamReader(in));
+			} finally {
+				in.close();
+			}
+		} catch (IOException ex) {
+			throw new IOError(ex);
+		}
+	}
+
+	@Override
     public void processBody(ParserContext context) {
         StringBuilder body = new StringBuilder(context.getBody().length());
         if (!context.hasHeader()) {
