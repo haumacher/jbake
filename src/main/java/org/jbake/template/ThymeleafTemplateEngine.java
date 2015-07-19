@@ -148,12 +148,7 @@ public class ThymeleafTemplateEngine extends AbstractTemplateEngine {
         }
 
         private Object getAllTags() {
-            List<ODocument> query = db.getAllTagsFromPublishedPosts();
-            Set<String> result = new HashSet<String>();
-            for (ODocument document : query) {
-                String[] tags = DBUtil.toStringArray(document.field("tags"));
-                Collections.addAll(result, tags);
-            }
+            Set<String> result = db.getTags();
             return result;
         }
         

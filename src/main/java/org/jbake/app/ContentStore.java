@@ -119,14 +119,14 @@ public class ContentStore {
         return query("select * from " + DOCUMENT_CLASS + " where type=? order by date desc", docType);
     }
 
-    public List<ODocument> getAllTagsFromPublishedPosts() {
-        return query("select tags from " + DOCUMENT_CLASS + " where type='post' and status='published'");
+    private List<ODocument> getAllTagsFromPublishedDocuments() {
+    	if (postOnly) {
+    		return query("select tags from " + DOCUMENT_CLASS + " where type='post' and status='published'");
+    	} else {
+    		return query("select tags from " + DOCUMENT_CLASS + " where status='published'");
+    	}
     }
 
-    public List<ODocument> getAllTagsFromPublishedDocuments() {
-    	return query("select tags from " + DOCUMENT_CLASS + " where status='published'");
-    }
-    
     public List<ODocument> getSignaturesForTemplates() {
         return query("select sha1 from Signatures where key='templates'");
     }
@@ -174,7 +174,7 @@ public class ContentStore {
     }
 
     public Set<String> getTags() {
-		List<ODocument> query = postOnly ? getAllTagsFromPublishedPosts() : getAllTagsFromPublishedDocuments();
+		List<ODocument> query = getAllTagsFromPublishedDocuments();
 	    Set<String> result = new HashSet<String>();
 	    for (ODocument document : query) {
 	        String[] tags = DBUtil.toStringArray(document.field("tags"));

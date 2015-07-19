@@ -112,12 +112,7 @@ public class FreemarkerTemplateEngine extends AbstractTemplateEngine {
             	return new SimpleSequence(DocumentList.wrap(allContent.iterator()));
             }
             if ("alltags".equals(key)) {
-                List<ODocument> query = db.getAllTagsFromPublishedPosts();
-                Set<String> result = new HashSet<String>();
-                for (ODocument document : query) {
-                    String[] tags = DBUtil.toStringArray(document.field("tags"));
-                    Collections.addAll(result, tags);
-                }
+                Set<String> result = db.getTags();
                 return new SimpleCollection(result);
             }
             String[] documentTypes = DocumentTypes.getDocumentTypes();
