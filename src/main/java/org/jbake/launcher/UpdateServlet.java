@@ -103,7 +103,7 @@ public class UpdateServlet extends HttpServlet {
 		}
 		
 		PrintWriter out = resp.getWriter();
-		new JSON().append(out, document);
+		new JSON().append(out, document.asMap());
 	}
 
 	private void revert(File sourceFile, File backup) {
