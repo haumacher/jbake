@@ -29,7 +29,7 @@ public class IndexServlet extends HttpServlet {
 		try {
 			resp.setContentType("text/html");
 			resp.setCharacterEncoding("utf-8");
-			resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
+			resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
 			_oven.getRenderer().renderIndex(resp.getWriter(), true);
 		} catch (RenderingException ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
