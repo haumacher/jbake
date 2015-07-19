@@ -55,7 +55,7 @@ public class JettyServer {
         }
         if (config.getBoolean(Keys.RENDER_TAGS)) {
         	String tagUri = uri(config.getString(Keys.TAG_PATH));
-			servletHandler.addServlet(new ServletHolder(new TagServlet(oven)), "/" + tagUri);
+			servletHandler.addServlet(new ServletHolder(new TagServlet(oven)), "/" + tagUri + "/*");
         }
         if (config.getBoolean(Keys.RENDER_ARCHIVE)) {
         	String uri = uri(config.getString(Keys.ARCHIVE_FILE));
