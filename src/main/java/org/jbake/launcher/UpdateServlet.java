@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
+import java.util.Collections;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,33 +36,21 @@ public class UpdateServlet extends HttpServlet {
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		String sourceuri = req.getPathInfo();
-		if (sourceuri.startsWith("/")) {
-			sourceuri = sourceuri.substring(1);
-		}
+		String sourceURI = getSourceURI(req);
 		
-		if (sourceuri.contains("..") || sourceuri.contains(":") || sourceuri.contains("\\")) {
-			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+		if (!check(resp, sourceURI)) {
 			return;
 		}
 		
-		File sourceFile = new File(source, sourceuri);
+		File sourceFile = new File(source, sourceURI);
 		File dir = sourceFile.getParentFile();
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
 		
-		resp.setContentType("text/json");
-		resp.setCharacterEncoding("utf-8");
-		
 		File backup;
 		if (sourceFile.exists()) {
-			backup = new File(source, sourceuri + "~");
-			if (backup.exists()) {
-				backup.delete();
-			}
-			
-			sourceFile.renameTo(backup);
+			backup = backup(sourceURI, sourceFile);
 		} else {
 			backup = null;
 		}
@@ -85,7 +75,7 @@ public class UpdateServlet extends HttpServlet {
 				out.close();
 			}
 			
-			document = oven.getCrawler().parse(sourceuri, sourceFile);
+			document = oven.getCrawler().parse(sourceURI, sourceFile);
 			try {
 				oven.getRenderer().render(document);
 			} catch (Exception ex) {
@@ -102,8 +92,72 @@ public class UpdateServlet extends HttpServlet {
 			throw ex;
 		}
 		
+		sendJSON(resp, document.asMap());
+	}
+
+	@Override
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		String sourceURI = getSourceURI(req);
+		
+		if (!check(resp, sourceURI)) {
+			return;
+		}
+		
+		File sourceFile = new File(source, sourceURI);
+		if (!sourceFile.exists()) {
+			sendNotFound(resp);
+			return;
+		}
+		
+		boolean success = sourceFile.delete();
+		if (! success) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Cannot delete resource.");
+			return;
+		}
+		
+		oven.getDB().deleteContent(sourceURI);
+		
+		sendJSON(resp, Collections.singletonMap("uri", "index.html"));
+	}
+	
+	private String getSourceURI(HttpServletRequest req) {
+		String sourceURI = req.getPathInfo();
+		if (sourceURI.startsWith("/")) {
+			sourceURI = sourceURI.substring(1);
+		}
+		return sourceURI;
+	}
+
+	private boolean check(HttpServletResponse resp, String sourceURI) {
+		if (sourceURI.contains("..") || sourceURI.contains(":") || sourceURI.contains("\\")) {
+			sendNotFound(resp);
+			return false;
+		}
+		return true;
+	}
+
+	private File backup(String sourceURI, File sourceFile) {
+		File backup = new File(source, sourceURI + "~");
+		if (backup.exists()) {
+			backup.delete();
+		}
+		
+		sourceFile.renameTo(backup);
+		return backup;
+	}
+
+	private void sendJSON(HttpServletResponse resp, Map<String, ?> result)
+			throws IOException {
+		resp.setContentType("text/json");
+		resp.setCharacterEncoding("utf-8");
+		
 		PrintWriter out = resp.getWriter();
-		new JSON().append(out, document.asMap());
+		new JSON().append(out, result);
+	}
+
+	private void sendNotFound(HttpServletResponse resp) {
+		resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 	}
 
 	private void revert(File sourceFile, File backup) {
