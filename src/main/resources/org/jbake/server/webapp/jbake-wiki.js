@@ -18,35 +18,55 @@ function jbToggleEdit() {
 		});
 		
 		xmlRequest.fail(function(jqXHR, textStatus) {
-			alert("Loading source '" + url + "' failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
+			alert("Loading source from '" + url + "' failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
 		});
 	} else {
 		// Currently in edit mode, save changes.
 		var source = editor.prop("value");
 		
 		var putUri = $("#jb-uri").prop("value");
+
+		var url = contextPath + "jb/update/" + putUri;
 		
 		var xmlRequest = $.ajax({
 			method: "PUT",
-			url: contextPath + "jb/update/" + putUri,
+			url: url,
 			processData: false,
 			contentType: "text/plain; charset=UTF-8",
 			data: source
 		});
 		 
 		xmlRequest.done(function(result) {
-			if (putUri == sourceuri) {
-				viewer.html(result.body);
-				$('#jb-title').text(result.title); 
-				$('.custom-editor').toggleClass('custom-hidden'); 
-			} else {
-				document.location = "/" + result.uri;
-			}
+			document.location = "/" + result.uri;
 		});
 		
 		xmlRequest.fail(function(jqXHR, textStatus) {
-			alert("Saving failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
+			alert("Saving page to '" + url + "' failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
 		});
 	}
+	return false;
+}
+
+function jbDeletePage() {
+	if (!confirm("You are about to delte the page '" + sourceuri + "'. Are you sure, you want to continue?")) {
+		return false;
+	}
+	
+	var url = contextPath + "jb/update/" + sourceuri;
+	
+	var xmlRequest = $.ajax({
+		method: "DELETE",
+		url: url,
+		processData: false
+	});
+	
+	xmlRequest.done(function(result) {
+		document.location = "/" + result.uri;
+	});
+	
+	xmlRequest.fail(function(jqXHR, textStatus) {
+		alert("Deleting page '" + url + "' failed: " + jqXHR.statusText + " (" + jqXHR.status + ")");
+	});
+	
 	return false;
 }
