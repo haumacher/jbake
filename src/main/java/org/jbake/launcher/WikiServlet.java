@@ -70,6 +70,9 @@ public class WikiServlet extends HttpServlet {
 		
 		if (sourceUri != null) {
 			JDocument document = oven.getCrawler().parse(sourceUri, sourceFile);
+			if (document == null) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Page does not exist: " + sourceUri);
+			}
 			try {
 				resp.setContentType("text/html");
 				resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
