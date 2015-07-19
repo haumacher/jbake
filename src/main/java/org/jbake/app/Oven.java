@@ -282,7 +282,7 @@ public class Oven {
 
 	public ContentStore getDB() {
 		if (_db == null) {
-			_db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
+			_db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH), config.getBoolean(Keys.TAG_POST_ONLY));
 			updateDocTypesFromConfiguration();
 			DBUtil.updateSchema(_db);
 		}

@@ -158,6 +158,11 @@ public class ConfigUtil {
 		static final String TAG_PATH = "tag.path";
 		
 		/**
+		 * Whether only posts are searched for tags.
+		 */
+		static final String TAG_POST_ONLY = "tag.postOnly";
+		
+		/**
 		 * Should the tag value be sanitized?
 		 */
 		static final String TAG_SANITIZE = "tag.sanitize";
