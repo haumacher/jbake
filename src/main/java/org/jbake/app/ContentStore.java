@@ -148,7 +148,13 @@ public class ContentStore {
         executeCommand("insert into Signatures(key,sha1) values('templates',?)", currentTemplatesSignature);
     }
 
-    private List<ODocument> query(String sql) {
+    /**
+     * Executes a generic query.
+     * 
+     * @param sql The query SQL.
+     * @return The query result set.
+     */
+    public List<ODocument> query(String sql) {
         return db.query(new OSQLSynchQuery<ODocument>(sql));
     }
     

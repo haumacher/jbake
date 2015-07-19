@@ -202,6 +202,16 @@ public class ThymeleafTemplateEngine extends AbstractTemplateEngine {
     	 */
     	public class DocumentsUtility {
     		
+    		/**
+    		 * Delegates a generic sql query to the {@link ContentStore}.
+    		 * 
+    		 * @param sql The query.
+    		 * @return The query result.
+    		 */
+    		public List<Map<String,Object>> query(String sql) {
+    			return DocumentList.wrap(db.query(sql).iterator());
+    		}
+    		
 			/**
 			 * Creates a {@link Comparator} for sorting documents according to a
 			 * given specification.
