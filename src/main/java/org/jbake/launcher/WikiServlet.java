@@ -72,7 +72,7 @@ public class WikiServlet extends HttpServlet {
 			JDocument document = oven.getCrawler().parse(sourceUri, sourceFile);
 			try {
 				resp.setContentType("text/html");
-				resp.setHeader("cacheControl", "public, max-age=0, s-maxage=0");
+				resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
 
 				oven.getRenderer().renderDocument(document, resp.getWriter(), true);
 			} catch (Exception ex) {
