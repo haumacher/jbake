@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -105,7 +106,10 @@ public class Renderer {
 		if (wikiMode) {
 			setWikiMode(model);
 		}
-		renderingEngine.renderDocument(model, findTemplateName(docType(content)), out);
+		
+		StringWriter buffer = new StringWriter();
+		renderingEngine.renderDocument(model, findTemplateName(docType(content)), buffer);
+		PostProcessor.postProcess(buffer, out);
 	}
 
 	private String docType(JDocument content) {
