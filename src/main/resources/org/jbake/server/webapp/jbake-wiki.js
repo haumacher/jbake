@@ -47,6 +47,33 @@ function jbToggleEdit() {
 	return false;
 }
 
+function jbCreateNew() {
+	var editor = $("#custom-source");
+	
+	if (editor.css("display") != "none") {
+		alert("Already editing a page. First save the current edit or cancel.");
+		return false;
+	}
+	
+	editor.prop("value", 
+		"title=New Page" + "\n" +
+		"date=" + "\n" +
+		"type=page" + "\n" +
+		"tags=" + "\n" +
+		"status=published" + "\n" +
+		"~~~~~~" + "\n" + 
+		"New text." + "\n"
+	);
+
+	var uriField = $("#jb-uri");
+	var currentPath = sourceuri;
+	
+	var putUri = uriField.prop("value", currentPath);
+	
+	$('.custom-editor').toggleClass('custom-hidden'); 
+	return false;
+}
+
 function jbDeletePage() {
 	if (!confirm("You are about to delte the page '" + sourceuri + "'. Are you sure, you want to continue?")) {
 		return false;
