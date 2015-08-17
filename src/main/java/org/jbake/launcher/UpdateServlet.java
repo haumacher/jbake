@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
@@ -16,8 +17,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.util.ajax.JSON;
+import org.jbake.app.FileUtil;
 import org.jbake.app.JDocument;
 import org.jbake.app.Oven;
+import org.jbake.parser.Engines;
+import org.jbake.parser.MarkupEngine;
 
 public class UpdateServlet extends HttpServlet {
 
@@ -48,8 +52,30 @@ public class UpdateServlet extends HttpServlet {
 			dir.mkdirs();
 		}
 		
+		if (sourceFile.isDirectory()) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, 
+					"The resource '" + sourceURI + "' is a directory, please choose another name.");
+			return;
+		}
+		
+        String extension = FileUtil.fileExt(sourceURI);
+		MarkupEngine engine = Engines.get(extension);
+        if (engine==null) {
+        	ArrayList<String> possibleExtensions = new ArrayList<String>(Engines.getRecognizedExtensions());
+        	Collections.sort(possibleExtensions);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, 
+        			"The file extension '" + extension + "' is not known. Possible file extensions are: " + possibleExtensions);
+        	return;
+        }
+		
 		File backup;
 		if (sourceFile.exists()) {
+			String create = req.getParameter("create");
+			if (create != null && create.equals("true")) {
+				resp.sendError(HttpServletResponse.SC_CONFLICT, 
+						"The resource '" + sourceURI + "' already exists, please choose another name.");
+				return;
+			}
 			backup = backup(sourceURI, sourceFile);
 		} else {
 			backup = null;
