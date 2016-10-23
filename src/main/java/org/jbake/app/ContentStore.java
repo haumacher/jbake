@@ -245,4 +245,14 @@ public class ContentStore {
         //page.createIndex("uriIdx", OClass.INDEX_TYPE.UNIQUE, "uri");
         //page.createIndex("renderedIdx", OClass.INDEX_TYPE.NOTUNIQUE, "rendered");
     }
+
+	public void enter() {
+        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+	}
+
+	public void exit() {
+		ODatabaseRecordThreadLocal.INSTANCE.remove();
+	}
+	
+	
 }

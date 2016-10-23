@@ -15,12 +15,10 @@ import org.jbake.util.WriterOut;
  * 
  * @author <a href="mailto:haui@haumacher.de">Bernhard Haumacher</a>
  */
-public class IndexServlet extends HttpServlet {
-
-	private final Oven _oven;
+public class IndexServlet extends JBakeServlet {
 
 	public IndexServlet(Oven oven) {
-		_oven = oven;
+		super(oven);
 	}
 
 	@Override
@@ -47,7 +45,7 @@ public class IndexServlet extends HttpServlet {
 			
 			String indexName = path.substring(0, pageStartIndex) + path.substring(suffixIndex);
 			
-			_oven.getRenderer().renderIndexPage(page, indexName, new WriterOut(resp.getWriter()));
+			oven().getRenderer().renderIndexPage(page, indexName, new WriterOut(resp.getWriter()));
 		} catch (Exception ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}

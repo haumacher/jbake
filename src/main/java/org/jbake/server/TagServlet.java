@@ -16,13 +16,12 @@ import org.jbake.app.Oven;
  * 
  * @author <a href="mailto:haui@haumacher.de">Bernhard Haumacher</a>
  */
-public class TagServlet extends HttpServlet {
+public class TagServlet extends JBakeServlet {
 
-	private final Oven _oven;
 	private String _outputExtension;
 
 	public TagServlet(Oven oven) {
-		_oven = oven;
+		super(oven);
 		CompositeConfiguration config = oven.getConfig();
 		_outputExtension = config.getString(Keys.OUTPUT_EXTENSION);
 	}
@@ -41,7 +40,7 @@ public class TagServlet extends HttpServlet {
 			resp.setContentType("text/html");
 			resp.setCharacterEncoding("utf-8");
 			resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
-			_oven.getRenderer().renderTag(resp.getWriter(), tag);
+			oven().getRenderer().renderTag(resp.getWriter(), tag);
 		} catch (Exception ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}

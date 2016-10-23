@@ -13,21 +13,21 @@ import org.jbake.app.Crawler;
 import org.jbake.app.Oven;
 import org.jbake.parser.Engines;
 
-public class WikiServlet extends HttpServlet {
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
-	private final Oven oven;
-	
+public class WikiServlet extends JBakeServlet {
+
 	private final File source;
 
 	private String[] sourceExtensions;
 
 	public WikiServlet(Oven oven) {
-		this.oven = oven;
+		super(oven);
 		
     	source = oven.getContentsPath();
     	sourceExtensions = Engines.getRecognizedExtensions().toArray(new String[0]);
 	}
-
+	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -70,7 +70,7 @@ public class WikiServlet extends HttpServlet {
 		}
 		
 		if (sourceUri != null) {
-			Crawler crawler = oven.getCrawler();
+			Crawler crawler = oven().getCrawler();
 			Map<String, Object> document = crawler.crawlSourceFile(sourceFile, crawler.buildHash(sourceFile), sourceUri);
 			if (document == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Page does not exist: " + sourceUri);
@@ -79,7 +79,7 @@ public class WikiServlet extends HttpServlet {
 				resp.setContentType("text/html");
 				resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
 
-				oven.getRenderer().renderPage(resp.getWriter(), document, oven.getRenderer().docType(document));
+				oven().getRenderer().renderPage(resp.getWriter(), document, oven().getRenderer().docType(document));
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -87,5 +87,5 @@ public class WikiServlet extends HttpServlet {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}
-	
+
 }

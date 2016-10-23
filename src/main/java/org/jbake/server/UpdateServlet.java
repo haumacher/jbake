@@ -23,17 +23,14 @@ import org.jbake.app.Oven;
 import org.jbake.parser.Engines;
 import org.jbake.parser.ParserEngine;
 
-public class UpdateServlet extends HttpServlet {
+public class UpdateServlet extends JBakeServlet {
 
 	public static final String JB_ASSETS_URI = "/jb/assets/";
 
-	private final Oven oven;
-	
 	private final File source;
 
 	public UpdateServlet(Oven oven) {
-		this.oven = oven;
-		
+		super(oven);
     	source = oven.getContentsPath();
 	}
 
@@ -101,10 +98,10 @@ public class UpdateServlet extends HttpServlet {
 				out.close();
 			}
 			
-			Crawler crawler = oven.getCrawler();
+			Crawler crawler = oven().getCrawler();
 			document = crawler.crawlSourceFile(sourceFile, crawler.buildHash(sourceFile), sourceURI);
 			try {
-				oven.getRenderer().render(document);
+				oven().getRenderer().render(document);
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -143,7 +140,7 @@ public class UpdateServlet extends HttpServlet {
 			return;
 		}
 		
-		oven.getDB().deleteContent(sourceURI);
+		oven().getDB().deleteContent(sourceURI);
 		
 		sendJSON(resp, Collections.singletonMap("uri", "index.html"));
 	}

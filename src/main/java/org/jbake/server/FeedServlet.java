@@ -14,12 +14,10 @@ import org.jbake.app.Oven;
  * 
  * @author <a href="mailto:haui@haumacher.de">Bernhard Haumacher</a>
  */
-public class FeedServlet extends HttpServlet {
-
-	private final Oven _oven;
+public class FeedServlet extends JBakeServlet {
 
 	public FeedServlet(Oven oven) {
-		_oven = oven;
+		super(oven);
 	}
 
 	@Override
@@ -29,7 +27,7 @@ public class FeedServlet extends HttpServlet {
 			resp.setContentType("text/xml");
 			resp.setCharacterEncoding("utf-8");
 			resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
-			_oven.getRenderer().renderFeed(resp.getWriter());
+			oven().getRenderer().renderFeed(resp.getWriter());
 		} catch (Exception ex) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
