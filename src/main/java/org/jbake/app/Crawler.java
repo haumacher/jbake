@@ -161,9 +161,9 @@ public class Crawler {
             fileContents.put(String.valueOf(DocumentAttributes.SHA1), sha1);
             fileContents.put(String.valueOf(DocumentAttributes.RENDERED), false);
             if (fileContents.get(Attributes.TAGS) != null) {
-                // store them as a String[]
+                // store them as a List<String>
                 String[] tags = (String[]) fileContents.get(Attributes.TAGS);
-                fileContents.put(Attributes.TAGS, tags);
+                fileContents.put(Attributes.TAGS, Arrays.asList(tags));
             }
             fileContents.put(Attributes.FILE, sourceFile.getPath());
             fileContents.put(String.valueOf(DocumentAttributes.SOURCE_URI), uri);
