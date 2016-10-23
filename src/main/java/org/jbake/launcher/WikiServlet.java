@@ -75,6 +75,7 @@ public class WikiServlet extends HttpServlet {
 			}
 			try {
 				resp.setContentType("text/html");
+				resp.setCharacterEncoding("utf-8");
 				resp.setHeader("Cache-Control", "public, max-age=0, s-maxage=0");
 
 				oven.getRenderer().renderDocument(document, resp.getWriter(), true);
