@@ -58,23 +58,24 @@ public class Asset {
 			Arrays.sort(assets);
 			for (int i = 0; i < assets.length; i++) {
 				if (assets[i].isFile()) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("Copying [" + assets[i].getPath() + "]...");
 					File sourceFile = assets[i];
 					File destFile = new File(sourceFile.getPath().replace(source.getPath()+File.separator+config.getString(ConfigUtil.Keys.ASSET_FOLDER), destination.getPath()));
-					try {
-						FileUtils.copyFile(sourceFile, destFile);
-						sb.append("done!");
-						LOGGER.info(sb.toString());
-					} catch (IOException e) {
-						sb.append("failed!");
-						LOGGER.error(sb.toString(), e);
-						e.printStackTrace();
-						errors.add(e);
+					if (sourceFile.lastModified() > destFile.lastModified()) {
+						StringBuilder sb = new StringBuilder();
+						sb.append("Copying [" + assets[i].getPath() + "]...");
+						try {
+							FileUtils.copyFile(sourceFile, destFile);
+							sb.append("done!");
+							LOGGER.info(sb.toString());
+						} catch (IOException e) {
+							sb.append("failed!");
+							LOGGER.error(sb.toString(), e);
+							e.printStackTrace();
+							errors.add(e);
+						}
 					}
 				}
-
-				if (assets[i].isDirectory()) {
+				else if (assets[i].isDirectory()) {
 					copy(assets[i]);
 				}
 			}
