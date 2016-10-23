@@ -171,6 +171,12 @@ public class ContentStore {
         return query("select * from " + docType + " where rendered=false");
     }
 
+    public void deleteContent(String uri) {
+        for (String docType : DocumentTypes.getDocumentTypes()) {
+        	deleteContent(docType, uri);
+        }
+    }
+    
     public void deleteContent(String docType, String uri) {
         executeCommand("delete from " + docType + " where sourceuri=?", uri);
     }

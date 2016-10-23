@@ -4,6 +4,10 @@ import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.app.Crawler.Attributes;
 import org.jbake.template.DelegatingTemplateEngine;
+import org.jbake.template.RenderingException;
+import org.jbake.util.FileOut;
+import org.jbake.util.Out;
+import org.jbake.util.WriterOut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +31,7 @@ public class Renderer {
 	
 	private interface RenderingConfig {
 
-		File getPath();
+		Writer getWriter() throws IOException;
 
 		String getName();
 
@@ -37,20 +42,20 @@ public class Renderer {
 	
 	private static abstract class AbstractRenderingConfig implements RenderingConfig{
 
-		protected final File path;
+		private final Out out;
 		protected final String name;
 		protected final String template;
 
-		public AbstractRenderingConfig(File path, String name, String template) {
+		public AbstractRenderingConfig(Out out, String name, String template) {
 			super();
-			this.path = path;
+			this.out = out;
 			this.name = name;
 			this.template = template;
 		}
 		
 		@Override
-		public File getPath() {
-			return path;
+		public Writer getWriter() throws IOException {
+			return out.getWriter();
 		}
 
 		@Override
@@ -67,8 +72,8 @@ public class Renderer {
 	public static class ModelRenderingConfig extends AbstractRenderingConfig {
 		private final Map<String, Object> model;
 
-		public ModelRenderingConfig(File path, String name, Map<String, Object> model, String template) {
-			super(path, name, template);
+		public ModelRenderingConfig(Out out, String name, Map<String, Object> model, String template) {
+			super(out, name, template);
 			this.model = model;
 		}
 		
@@ -82,13 +87,16 @@ public class Renderer {
 
 		private final Object content;
 		
-		private DefaultRenderingConfig(File path, String allInOneName) {
-			super(path, allInOneName, findTemplateName(allInOneName));
-			this.content = buildSimpleModel(allInOneName);
+		private DefaultRenderingConfig(File path, Charset encoding, String allInOneName) {
+			this(new FileOut(path, encoding), allInOneName);
 		}
 		
-		public DefaultRenderingConfig(String filename, String allInOneName) {
-			super(new File(destination.getPath() + File.separator + filename), allInOneName, findTemplateName(allInOneName));
+		public DefaultRenderingConfig(String filename, Charset encoding, String allInOneName) {
+			this(fileOut(filename, encoding), allInOneName);
+		}
+		
+		public DefaultRenderingConfig(Out out, String allInOneName) {
+			super(out, allInOneName, findTemplateName(allInOneName));
 			this.content = buildSimpleModel(allInOneName);
 		}
 		
@@ -96,8 +104,8 @@ public class Renderer {
 		 * Constructor added due to known use of a allInOneName which is used for name, template and content
 		 * @param allInOneName
 		 */
-		public DefaultRenderingConfig(String allInOneName) {
-			this(new File(destination.getPath() + File.separator + allInOneName + config.getString(Keys.OUTPUT_EXTENSION)), 
+		public DefaultRenderingConfig(String allInOneName, Charset encoding) {
+			this(new File(destination.getPath() + File.separator + allInOneName + config.getString(Keys.OUTPUT_EXTENSION)), encoding, 
 							allInOneName);
 		}
 
@@ -147,7 +155,7 @@ public class Renderer {
      * @throws Exception
      */
     public void render(Map<String, Object> content) throws Exception {
-    	String docType = (String) content.get(Crawler.Attributes.TYPE);
+    	String docType = docType(content);
         String outputFilename = destination.getPath() + File.separatorChar + content.get(Attributes.URI);
         if (outputFilename.lastIndexOf(".") > 0) {
         	outputFilename = outputFilename.substring(0, outputFilename.lastIndexOf("."));
@@ -171,13 +179,11 @@ public class Renderer {
         File outputFile = new File(outputFilename + FileUtil.findExtension(config,docType));
         StringBuilder sb = new StringBuilder();
         sb.append("Rendering [").append(outputFile).append("]... ");
-        Map<String, Object> model = new HashMap<String, Object>();
-        model.put("content", content);
-        model.put("renderer", renderingEngine);
 
         try {
             Writer out = createWriter(outputFile);
-            renderingEngine.renderDocument(model, findTemplateName(docType), out);
+            
+            renderPage(out, content, docType);
             out.close();
             sb.append("done!");
             LOGGER.info(sb.toString());
@@ -188,22 +194,32 @@ public class Renderer {
         }
     }
 
-    private Writer createWriter(File file) throws IOException {
-        if (!file.exists()) {
-            file.getParentFile().mkdirs();
-            file.createNewFile();
-        }
+	public String docType(Map<String, Object> content) {
+		return (String) content.get(Crawler.Attributes.TYPE);
+	}
 
-        return new OutputStreamWriter(new FileOutputStream(file), config.getString(ConfigUtil.Keys.RENDER_ENCODING));
+	public void renderPage(Writer out, Map<String, Object> content, String docType)
+			throws RenderingException {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("content", content);
+		model.put("renderer", renderingEngine);
+		renderingEngine.renderDocument(model, findTemplateName(docType), out);
+	}
+
+    private Writer createWriter(File file) throws IOException {
+    	return FileOut.createWriter(file, getEncoding());
     }
 
+	private Charset getEncoding() {
+		return Charset.forName(config.getString(ConfigUtil.Keys.RENDER_ENCODING));
+	}
+
     private void render(RenderingConfig renderConfig) throws Exception {
-        File outputFile = renderConfig.getPath();
         StringBuilder sb = new StringBuilder();
-        sb.append("Rendering ").append(renderConfig.getName()).append(" [").append(outputFile).append("]...");
+        sb.append("Rendering ").append(renderConfig.getName()).append(" [").append(renderConfig.getName()).append("]...");
 
         try {
-            Writer out = createWriter(outputFile);
+            Writer out = renderConfig.getWriter();
             renderingEngine.renderDocument(renderConfig.getModel(), renderConfig.getTemplate(), out);
             out.close();
             sb.append("done!");
@@ -227,9 +243,6 @@ public class Renderer {
       int postsPerPage = config.getInt(Keys.POSTS_PER_PAGE, -1);
       int start = 0;
 
-      Map<String, Object> model = new HashMap<String, Object>();
-      model.put("renderer", renderingEngine);
-      model.put("content", buildSimpleModel("masterindex"));
       if (paginate) {
           db.setLimit(postsPerPage);
       }
@@ -237,32 +250,7 @@ public class Renderer {
       try {
           int page = 1;
           while (start < totalPosts) {
-              String fileName = indexFile;
-
-              if (paginate) {
-                  db.setStart(start);
-                  int index = fileName.lastIndexOf(".");
-                  if (page != 1) {
-                      String previous = fileName.substring(0, index) +  (page > 2 ? page-1 : "") + 
-                              fileName.substring(index);
-                      model.put("previousFileName", previous);
-                  } else {
-                      model.remove("previousFileName");
-                  }
-                  
-                  // If this iteration won't consume the remaining posts, calculate
-                  // the next file name
-                  if ((start + postsPerPage) < totalPosts) {
-                      model.put("nextFileName", fileName.substring(0, index) + (page+1) +
-                          fileName.substring(index));
-                  } else {
-                      model.remove("nextFileName");
-                  }
-                  // Add page number to file name
-                  fileName = fileName.substring(0, index) + (page > 1 ? page : "") +
-                          fileName.substring(index);
-              }
-              render(new DefaultRenderingConfig(fileName, "masterindex"));
+              renderIndexPage(totalPosts, paginate, postsPerPage, start, page, indexFile, null);
               
               if (paginate) {
                   start += postsPerPage;
@@ -277,6 +265,56 @@ public class Renderer {
       }
     }
 
+    public void renderIndexPage(int page, String indexName, Out out) throws Exception {
+        long totalPosts = db.getDocumentCount("post");
+        boolean paginate = config.getBoolean(Keys.PAGINATE_INDEX, false);
+        int postsPerPage = config.getInt(Keys.POSTS_PER_PAGE, -1);
+        int start = (page - 1) * postsPerPage;
+		renderIndexPage(totalPosts, paginate, postsPerPage, start, postsPerPage, indexName, out);
+    }
+    
+	private void renderIndexPage(long totalPosts, boolean paginate,
+			int postsPerPage, int start, int page, String indexName, Out out)
+			throws Exception {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put("content", buildSimpleModel("masterindex"));
+		
+		String pageName;
+		if (paginate) {
+			db.setStart(start);
+			int index = indexName.lastIndexOf(".");
+			String baseName = indexName.substring(0, index);
+			String suffix = indexName.substring(index);
+			if (page != 1) {
+				model.put("previousFileName", indexPageName(baseName, suffix, page - 1));
+			}
+
+			// If this iteration won't consume the remaining posts, calculate
+			// the next file name
+			if ((start + postsPerPage) < totalPosts) {
+				model.put("nextFileName", indexPageName(baseName, suffix, page + 1));
+			}
+			// Add page number to file name
+			pageName = indexPageName(baseName, suffix, page);
+		} else {
+			pageName = indexName;
+		}
+		
+		if (out == null) {
+			out = fileOut(pageName, getEncoding());
+		}
+		render(new DefaultRenderingConfig(out, "masterindex"));
+	}
+
+	private String indexPageName(String baseName, String suffix, int page) {
+		return baseName + indexPageId(page) + suffix;
+	}
+
+	private Object indexPageId(int page) {
+		return page > 1 ? page : "";
+	}
+
     /**
      * Render an XML sitemap file using the supplied content.
      * @throws Exception 
@@ -285,9 +323,13 @@ public class Renderer {
      * @see <a href="http://www.sitemaps.org/">Sitemap protocol</a>
      */
     public void renderSitemap(String sitemapFile) throws Exception {
-    	render(new DefaultRenderingConfig(sitemapFile, "sitemap"));
+    	render(new DefaultRenderingConfig(sitemapFile, getEncoding(), "sitemap"));
     }
 
+    public void renderSitemap(Writer out) throws Exception {
+    	render(new DefaultRenderingConfig(new WriterOut(out), "sitemap"));
+    }
+    
     /**
      * Render an XML feed file using the supplied content.
      *
@@ -295,9 +337,13 @@ public class Renderer {
      * @throws Exception 
      */
     public void renderFeed(String feedFile) throws Exception {
-    	render(new DefaultRenderingConfig(feedFile, "feed"));
+    	render(new DefaultRenderingConfig(feedFile, getEncoding(), "feed"));
     }
 
+    public void renderFeed(Writer out) throws Exception {
+    	render(new DefaultRenderingConfig(new WriterOut(out), "feed"));
+    }
+    
     /**
      * Render an archive file using the supplied content.
      *
@@ -305,9 +351,13 @@ public class Renderer {
      * @throws Exception 
      */
     public void renderArchive(String archiveFile) throws Exception {
-    	render(new DefaultRenderingConfig(archiveFile, "archive"));
+    	render(new DefaultRenderingConfig(archiveFile, getEncoding(), "archive"));
     }
 
+    public void renderArchive(Writer out) throws Exception {
+    	render(new DefaultRenderingConfig(new WriterOut(out), "archive"));
+    }
+    
     /**
      * Render tag files using the supplied content.
      *
@@ -319,16 +369,9 @@ public class Renderer {
     	final List<Throwable> errors = new LinkedList<Throwable>();
         for (String tag : db.getTags()) {
             try {
-            	Map<String, Object> model = new HashMap<String, Object>();
-            	model.put("renderer", renderingEngine);
-            	model.put(Attributes.TAG, tag);
-            	Map<String, Object> map = buildSimpleModel(Attributes.TAG);
-                map.put(Attributes.ROOTPATH, "../");
-                model.put("content", map);
-
             	tag = tag.trim().replace(" ", "-");
             	File path = new File(destination.getPath() + File.separator + tagPath + File.separator + tag + config.getString(Keys.OUTPUT_EXTENSION));
-            	render(new ModelRenderingConfig(path, Attributes.TAG, model, findTemplateName(Attributes.TAG)));
+            	renderTag(path, tag);
                 renderedCount++;
             } catch (Exception e) {
                 errors.add(e);
@@ -345,6 +388,28 @@ public class Renderer {
         	return renderedCount;
         }
     }
+
+	private void renderTag(File path, String tag) throws Exception {
+		renderTag(new FileOut(path, getEncoding()), tag);
+	}
+
+	public void renderTag(Writer out, String tag) throws Exception {
+		renderTag(new WriterOut(out), tag);
+	}
+	
+	private void renderTag(Out out, String tag) throws Exception {
+		render(new ModelRenderingConfig(out, Attributes.TAG, createTagModel(tag), findTemplateName(Attributes.TAG)));
+	}
+
+	private Map<String, Object> createTagModel(String tag) {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("renderer", renderingEngine);
+		model.put(Attributes.TAG, tag);
+		Map<String, Object> map = buildSimpleModel(Attributes.TAG);
+		map.put(Attributes.ROOTPATH, "../");
+		model.put("content", map);
+		return model;
+	}
     
     /**
      * Builds simple map of values, which are exposed when rendering index/archive/sitemap/feed/tags.
@@ -359,4 +424,9 @@ public class Renderer {
     	// add any more keys here that need to have a default value to prevent need to perform null check in templates
     	return content;
     }
+
+    FileOut fileOut(String filename, Charset encoding) {
+		return new FileOut(new File(destination.getPath() + File.separator + filename), encoding);
+	}
+
 }

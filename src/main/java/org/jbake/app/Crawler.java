@@ -116,7 +116,7 @@ public class Crawler {
         }
     }
 
-    private String buildHash(final File sourceFile) {
+    public String buildHash(final File sourceFile) {
         String sha1;
         try {
             sha1 = FileUtil.sha1(sourceFile);
@@ -148,7 +148,7 @@ public class Crawler {
         return uri;
     }
 
-    private void crawlSourceFile(final File sourceFile, final String sha1, final String uri) {
+    public Map<String, Object> crawlSourceFile(final File sourceFile, final String sha1, final String uri) {
         Map<String, Object> fileContents = parser.processFile(sourceFile);
         if (fileContents != null) {
         	fileContents.put(Attributes.ROOTPATH, getPathToRoot(sourceFile));
@@ -181,8 +181,11 @@ public class Crawler {
             boolean cached = fileContents.get(DocumentAttributes.CACHED) != null ? Boolean.valueOf((String)fileContents.get(DocumentAttributes.CACHED)):true;
             doc.field(String.valueOf(DocumentAttributes.CACHED), cached);
             doc.save();
+            
+            return fileContents;
         } else {
             LOGGER.warn("{} has an invalid header, it has been ignored!", sourceFile);
+            return null;
         }
     }
 

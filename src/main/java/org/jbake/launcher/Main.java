@@ -45,9 +45,15 @@ public class Main {
 			e.printStackTrace(System.err);
 			System.exit(1);
 		} catch (final Throwable e) {
-			System.err.println("An unexpected error occurred: " + e.getMessage());
+			System.err.println("An unexpected error occurred: " + message(e));
+			e.printStackTrace();
 			System.exit(2);
 		}
+	}
+
+	static String message(final Throwable e) {
+		String message = e.getMessage();
+		return message == null ? e.getClass().getName() : message;
 	}
 
 	private void bake(final LaunchOptions options, final CompositeConfiguration config) {
@@ -62,7 +68,7 @@ public class Main {
 			msg.append(MessageFormat.format("JBake failed with {0} errors:\n", errors.size()));
 			int errNr = 1;
 			for (final Throwable error : errors) {
-				msg.append(MessageFormat.format("{0}. {1}\n", errNr, error.getMessage()));
+				msg.append(MessageFormat.format("{0}. {1}\n", errNr, message(error)));
 				++errNr;
 			}
 			throw new JBakeException(msg.toString(), errors.get(0));
@@ -100,12 +106,7 @@ public class Main {
 		
 		if (res.isRunServer()) {
 			startWatch(res, config);
-			if (res.getSource().getPath().equals(".")) {
-				// use the default destination folder
-				runServer(config.getString(Keys.DESTINATION_FOLDER), config.getString(Keys.SERVER_PORT));
-			} else {
-				runServer(res.getSource().getPath(), config.getString(Keys.SERVER_PORT));
-			}
+			runServer(res, config);
 		}
 		
 	}
@@ -135,8 +136,23 @@ public class Main {
 		parser.printUsage(System.out);
 	}
 
-	private void runServer(String path, String port) {
-		JettyServer.run(path, port);
+	private void runServer(LaunchOptions options, CompositeConfiguration config) {
+		File source = options.getSource();
+		final Oven oven = new Oven(source, options.getDestination(), config, options.isClearCache());
+		oven.setupPaths();
+		
+		oven.setupDB();
+		if (source.getPath().equals(".")) {
+			// use the default destination folder
+			runServer(config.getString(Keys.DESTINATION_FOLDER), config.getString(Keys.SERVER_PORT), oven);
+		} else {
+			runServer(source.getPath(), config.getString(Keys.SERVER_PORT), oven);
+		}
+		oven.shutdownDB();
+	}
+	
+	private void runServer(String path, String port, Oven oven) {
+		JettyServer.run(path, port, oven);
 	}
 
 	private void initStructure(CompositeConfiguration config, String type, String source) {

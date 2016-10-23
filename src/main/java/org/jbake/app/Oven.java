@@ -45,6 +45,8 @@ public class Oven {
 
 	private Renderer renderer;
 
+	private Crawler crawler;
+
     /**
      * Delegate c'tor to prevent API break for the moment.
      */
@@ -114,6 +116,18 @@ public class Oven {
         }
         ensureDestination();
     }
+    
+    public File getContentsPath() {
+		return contentsPath;
+	}
+    
+    public File getAssetsPath() {
+		return assetsPath;
+	}
+    
+    public File getTemplatesPath() {
+		return templatesPath;
+	}
 
 	private File setupRequiredFolderFromConfig(final String key) {
 		final File path = setupPathFromConfig(key);
@@ -129,51 +143,64 @@ public class Oven {
 	 * @throws JBakeException
 	 */
 	public void bake() {
-		final long start = new Date().getTime();
-		LOGGER.info("Baking has started...");
 		setupDB();
         try {
-
-                // process source content
-                Crawler crawler = new Crawler(db, source, config);
-                crawler.crawl(contentsPath);
-                LOGGER.info("Content detected:");
-                for (String docType : DocumentTypes.getDocumentTypes()) {
-                	long count = db.getDocumentCount(docType);
-                	if (count > 0) {
-                		LOGGER.info("Parsed {} files of type: {}", count, docType);
-            		}
-                }
-
-                Renderer renderer = getRenderer();
-
-                for(RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
-                	try {
-                		renderedCount += tool.render(renderer, db, destination, templatesPath, config);
-                	} catch(RenderingException e) {
-                		errors.add(e);
-                	}
-                }
-
-                // mark docs as rendered
-                for (String docType : DocumentTypes.getDocumentTypes()) {
-                        db.markConentAsRendered(docType);
-                }
-                // copy assets
-                Asset asset = new Asset(source, destination, config);
-                asset.copy(assetsPath);
-                errors.addAll(asset.getErrors());
-
-                LOGGER.info("Baking finished!");
-                long end = new Date().getTime();
-                LOGGER.info("Baked {} items in {}ms", renderedCount, end - start);
-                if (errors.size() > 0) {
-                        LOGGER.error("Failed to bake {} item(s)!", errors.size());
-                }
+        	bakeIncremental();
         } finally {
             shutdownDB();
         }
     }
+
+	public void bakeIncremental() {
+		errors.clear();
+		renderedCount = 0;
+		
+		final long start = new Date().getTime();
+		LOGGER.info("Baking has started...");
+
+		    // process source content
+		    getCrawler().crawl(contentsPath);
+		    LOGGER.info("Content detected:");
+		    for (String docType : DocumentTypes.getDocumentTypes()) {
+		    	long count = db.getDocumentCount(docType);
+		    	if (count > 0) {
+		    		LOGGER.info("Parsed {} files of type: {}", count, docType);
+				}
+		    }
+
+		    Renderer renderer = getRenderer();
+
+		    for(RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
+		    	try {
+		    		renderedCount += tool.render(renderer, db, destination, templatesPath, config);
+		    	} catch(RenderingException e) {
+		    		errors.add(e);
+		    	}
+		    }
+
+		    // mark docs as rendered
+		    for (String docType : DocumentTypes.getDocumentTypes()) {
+		            db.markConentAsRendered(docType);
+		    }
+		    // copy assets
+		    Asset asset = new Asset(source, destination, config);
+		    asset.copy(assetsPath);
+		    errors.addAll(asset.getErrors());
+
+		    LOGGER.info("Baking finished!");
+		    long end = new Date().getTime();
+		    LOGGER.info("Baked {} items in {}ms", renderedCount, end - start);
+		    if (errors.size() > 0) {
+		            LOGGER.error("Failed to bake {} item(s)!", errors.size());
+		    }
+	}
+
+	public Crawler getCrawler() {
+		if (crawler == null) {
+			crawler = new Crawler(db, source, config);
+		}
+		return crawler;
+	}
 
 	/**
 	 * Prepares for baking.
@@ -184,7 +211,14 @@ public class Oven {
         DBUtil.updateSchema(db);
         clearCacheIfNeeded(db);
 	}
-
+	
+	/**
+	 * The source {@link ContentStore}.
+	 */
+	public ContentStore getDB() {
+		return db;
+	}
+	
 	/**
 	 * Frees resources after baking.
 	 */
@@ -203,6 +237,10 @@ public class Oven {
 		return renderer;
 	}
 	
+    public void resetRenderer() {
+    	renderer = null;
+    }
+
     /**
      * Iterates over the configuration, searching for keys like "template.index.file=..."
      * in order to register new document types.
