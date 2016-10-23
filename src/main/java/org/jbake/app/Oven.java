@@ -159,7 +159,7 @@ public class Oven {
 		LOGGER.info("Baking has started...");
 
 		    // process source content
-		    getCrawler().crawl(contentsPath);
+		    int processed = getCrawler().crawl(contentsPath);
 		    LOGGER.info("Content detected:");
 		    for (String docType : DocumentTypes.getDocumentTypes()) {
 		    	long count = db.getDocumentCount(docType);
@@ -168,20 +168,23 @@ public class Oven {
 				}
 		    }
 
-		    Renderer renderer = getRenderer();
-
-		    for(RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
-		    	try {
-		    		renderedCount += tool.render(renderer, db, destination, templatesPath, config);
-		    	} catch(RenderingException e) {
-		    		errors.add(e);
+		    if (processed > 0) {
+		    	Renderer renderer = getRenderer();
+		    	
+		    	for(RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
+		    		try {
+		    			renderedCount += tool.render(renderer, db, destination, templatesPath, config);
+		    		} catch(RenderingException e) {
+		    			errors.add(e);
+		    		}
+		    	}
+		    	
+		    	// mark docs as rendered
+		    	for (String docType : DocumentTypes.getDocumentTypes()) {
+		    		db.markConentAsRendered(docType);
 		    	}
 		    }
-
-		    // mark docs as rendered
-		    for (String docType : DocumentTypes.getDocumentTypes()) {
-		            db.markConentAsRendered(docType);
-		    }
+		    
 		    // copy assets
 		    Asset asset = new Asset(source, destination, config);
 		    asset.copy(assetsPath);

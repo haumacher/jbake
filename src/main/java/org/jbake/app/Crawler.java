@@ -73,8 +73,11 @@ public class Crawler {
      * Crawl all files and folders looking for content.
      *
      * @param path Folder to start from
+     * 
+     * @return The number of processed files.
      */
-    public void crawl(File path) {
+    public int crawl(File path) {
+    	int result = 0;
         File[] contents = path.listFiles(FileUtil.getFileFilter());
         if (contents != null) {
             Arrays.sort(contents);
@@ -106,14 +109,17 @@ public class Crawler {
                     }
                     if (process) { // new or updated
                         crawlSourceFile(sourceFile, sha1, uri);
+                        result++;
                     }
                     LOGGER.info(sb.toString());
                 }
                 if (sourceFile.isDirectory()) {
-                    crawl(sourceFile);
+                    result += crawl(sourceFile);
                 }
             }
         }
+        
+        return result;
     }
 
     public String buildHash(final File sourceFile) {
