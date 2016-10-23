@@ -197,7 +197,7 @@ public class ContentStore {
         executeCommand("insert into Signatures(key,sha1) values('templates',?)", currentTemplatesSignature);
     }
 
-    private DocumentList query(String sql) {
+    public DocumentList query(String sql) {
         List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>(sql));
         return DocumentList.wrap(results.iterator());
     }
