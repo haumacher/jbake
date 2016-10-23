@@ -99,7 +99,7 @@ public class UpdateServlet extends JBakeServlet {
 			}
 			
 			Crawler crawler = oven().getCrawler();
-			document = crawler.crawlSourceFile(sourceFile, crawler.buildHash(sourceFile), sourceURI);
+			document = crawler.crawlSourceFile(sourceFile, crawler.buildHash(sourceFile));
 			try {
 				oven().getRenderer().render(document);
 			} catch (Exception ex) {
@@ -114,6 +114,10 @@ public class UpdateServlet extends JBakeServlet {
 		} catch (RuntimeException ex) {
 			revert(sourceFile, backup);
 			throw ex;
+		}
+		
+		if (backup != null) {
+			backup.delete();
 		}
 		
 		sendJSON(resp, document);

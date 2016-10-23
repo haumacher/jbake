@@ -154,6 +154,10 @@ public class Crawler {
         return uri;
     }
 
+    public Map<String, Object> crawlSourceFile(final File sourceFile, final String sha1) {
+    	return crawlSourceFile(sourceFile, sha1, buildURI(sourceFile));
+    }
+    
     public Map<String, Object> crawlSourceFile(final File sourceFile, final String sha1, final String uri) {
         Map<String, Object> fileContents = parser.processFile(sourceFile);
         if (fileContents != null) {
@@ -181,6 +185,8 @@ public class Crawler {
             if (config.getBoolean(Keys.URI_NO_EXTENSION)) {
             	fileContents.put(Attributes.NO_EXTENSION_URI, uri.replace("/index.html", "/"));
             }
+
+        	db.deleteContent(uri);
 
             ODocument doc = new ODocument(documentType);
             doc.fields(fileContents);

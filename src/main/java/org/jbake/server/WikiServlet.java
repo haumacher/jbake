@@ -71,7 +71,7 @@ public class WikiServlet extends JBakeServlet {
 		
 		if (sourceUri != null) {
 			Crawler crawler = oven().getCrawler();
-			Map<String, Object> document = crawler.crawlSourceFile(sourceFile, crawler.buildHash(sourceFile), sourceUri);
+			Map<String, Object> document = crawler.crawlSourceFile(sourceFile, crawler.buildHash(sourceFile));
 			if (document == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Page does not exist: " + sourceUri);
 			}
