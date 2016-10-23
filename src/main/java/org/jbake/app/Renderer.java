@@ -3,6 +3,7 @@ package org.jbake.app;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.app.Crawler.Attributes;
+import org.jbake.processors.PostProcessor;
 import org.jbake.template.DelegatingTemplateEngine;
 import org.jbake.template.RenderingException;
 import org.jbake.util.FileOut;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -203,7 +205,11 @@ public class Renderer {
 		Map<String, Object> model = new HashMap<String, Object>();
 		model.put("content", content);
 		model.put("renderer", renderingEngine);
-		renderingEngine.renderDocument(model, findTemplateName(docType), out);
+		
+		StringWriter buffer = new StringWriter();
+		renderingEngine.renderDocument(model, findTemplateName(docType(content)), buffer);
+		PostProcessor.postProcess(buffer, out);
+		
 	}
 
     private Writer createWriter(File file) throws IOException {
