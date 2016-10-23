@@ -41,6 +41,10 @@ public class Oven {
 	private List<Throwable> errors = new LinkedList<Throwable>();
 	private int renderedCount = 0;
 
+	private ContentStore db;
+
+	private Renderer renderer;
+
     /**
      * Delegate c'tor to prevent API break for the moment.
      */
@@ -125,13 +129,10 @@ public class Oven {
 	 * @throws JBakeException
 	 */
 	public void bake() {
-			final ContentStore db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
-            updateDocTypesFromConfiguration();
-            DBUtil.updateSchema(db);
-            try {
-                final long start = new Date().getTime();
-                LOGGER.info("Baking has started...");
-                clearCacheIfNeeded(db);
+		final long start = new Date().getTime();
+		LOGGER.info("Baking has started...");
+		setupDB();
+        try {
 
                 // process source content
                 Crawler crawler = new Crawler(db, source, config);
@@ -144,7 +145,7 @@ public class Oven {
             		}
                 }
 
-                Renderer renderer = new Renderer(db, destination, templatesPath, config);
+                Renderer renderer = getRenderer();
 
                 for(RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
                 	try {
@@ -170,11 +171,38 @@ public class Oven {
                         LOGGER.error("Failed to bake {} item(s)!", errors.size());
                 }
         } finally {
-                db.close();
-                db.shutdown();
+            shutdownDB();
         }
     }
 
+	/**
+	 * Prepares for baking.
+	 */
+	public void setupDB() {
+		db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));
+        updateDocTypesFromConfiguration();
+        DBUtil.updateSchema(db);
+        clearCacheIfNeeded(db);
+	}
+
+	/**
+	 * Frees resources after baking.
+	 */
+	public void shutdownDB() {
+		db.close();
+		db.shutdown();
+	}
+	
+	/**
+	 * Allocates the {@link Renderer}.
+	 */
+	public Renderer getRenderer() {
+		if (renderer == null) {
+			renderer = new Renderer(db, destination, templatesPath, config);
+		}
+		return renderer;
+	}
+	
     /**
      * Iterates over the configuration, searching for keys like "template.index.file=..."
      * in order to register new document types.
